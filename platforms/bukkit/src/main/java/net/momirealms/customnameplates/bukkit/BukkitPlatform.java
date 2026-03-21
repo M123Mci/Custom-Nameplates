@@ -18,6 +18,7 @@
 package net.momirealms.customnameplates.bukkit;
 
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.momirealms.customnameplates.api.CNPlayer;
 import net.momirealms.customnameplates.api.ConfigManager;
@@ -27,6 +28,7 @@ import net.momirealms.customnameplates.api.feature.bossbar.BossBar;
 import net.momirealms.customnameplates.api.feature.tag.NameTagConfig;
 import net.momirealms.customnameplates.api.helper.AdventureHelper;
 import net.momirealms.customnameplates.api.helper.VersionHelper;
+import net.momirealms.customnameplates.api.network.ExternalPassengerRegistry;
 import net.momirealms.customnameplates.api.network.PacketEvent;
 import net.momirealms.customnameplates.api.network.Tracker;
 import net.momirealms.customnameplates.api.placeholder.DummyPlaceholder;
@@ -319,6 +321,11 @@ public class BukkitPlatform implements Platform {
                     Set<Integer> otherEntities = another.getTrackedPassengerIds(player);
                     for (int passenger : passengers) {
                         otherEntities.add(passenger);
+                    }
+                    /* 合并外部插件 passenger */
+                    IntSet externalIds = ExternalPassengerRegistry.collectPassengers(another, player);
+                    if (!externalIds.isEmpty()) {
+                        otherEntities.addAll(externalIds);
                     }
                     int[] merged = new int[otherEntities.size()];
                     int index = 0;

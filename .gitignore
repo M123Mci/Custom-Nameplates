@@ -4,7 +4,8 @@ target/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-
+.narrafork
+*.jar
 ### Unfinished ###
 platforms/sponge/
 

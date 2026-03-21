@@ -794,22 +794,22 @@ public final class Reflections {
     public static final Enum<?> enum$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_GAME_MODE;
     public static final Enum<?> enum$ClientboundPlayerInfoUpdatePacket$Action$ADD_PLAYER;
 
-    static {
-        Enum<?> updateGameMode;
-        try {
-            updateGameMode = Enum.valueOf((Class<Enum>) clazz$ClientboundPlayerInfoUpdatePacket$Action, "UPDATE_GAME_MODE");
-        } catch (Exception e) {
-            updateGameMode = Enum.valueOf((Class<Enum>) clazz$ClientboundPlayerInfoUpdatePacket$Action, "c");
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static Enum<?> resolveEnum(Class<?> enumClass, String... names) {
+        for (String name : names) {
+            try {
+                return Enum.valueOf((Class<Enum>) enumClass, name);
+            } catch (Exception ignored) {
+            }
         }
-        enum$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_GAME_MODE = updateGameMode;
+        throw new IllegalArgumentException("无法在 " + enumClass.getName() + " 中找到枚举常量: " + String.join(", ", names));
+    }
 
-        Enum<?> addPlayer;
-        try {
-            addPlayer = Enum.valueOf((Class<Enum>) clazz$ClientboundPlayerInfoUpdatePacket$Action, "ADD_PLAYER");
-        } catch (Exception e) {
-            addPlayer = Enum.valueOf((Class<Enum>) clazz$ClientboundPlayerInfoUpdatePacket$Action, "a");
-        }
-        enum$ClientboundPlayerInfoUpdatePacket$Action$ADD_PLAYER = addPlayer;
+    static {
+        enum$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_GAME_MODE =
+                resolveEnum(clazz$ClientboundPlayerInfoUpdatePacket$Action, "UPDATE_GAME_MODE", "c");
+        enum$ClientboundPlayerInfoUpdatePacket$Action$ADD_PLAYER =
+                resolveEnum(clazz$ClientboundPlayerInfoUpdatePacket$Action, "ADD_PLAYER", "a");
     }
 
     public static final Class<?> clazz$ClientboundPlayerInfoUpdatePacket$Entry = requireNonNull(

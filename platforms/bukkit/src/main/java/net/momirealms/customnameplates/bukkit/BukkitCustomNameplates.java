@@ -24,6 +24,7 @@ import net.momirealms.customnameplates.api.feature.JoinQuitListener;
 import net.momirealms.customnameplates.api.feature.PlayerListener;
 import net.momirealms.customnameplates.api.helper.AdventureHelper;
 import net.momirealms.customnameplates.api.helper.VersionHelper;
+import net.momirealms.customnameplates.api.network.ExternalPassengerRegistry;
 import net.momirealms.customnameplates.api.storage.data.PlayerData;
 import net.momirealms.customnameplates.api.util.Vector3;
 import net.momirealms.customnameplates.backend.feature.actionbar.ActionBarManagerImpl;
@@ -42,6 +43,7 @@ import net.momirealms.customnameplates.bukkit.compatibility.NameplatesExpansion;
 import net.momirealms.customnameplates.bukkit.compatibility.NameplatesExtraExpansion;
 import net.momirealms.customnameplates.bukkit.compatibility.cosmetic.ECosmeticsHook;
 import net.momirealms.customnameplates.bukkit.compatibility.cosmetic.HMCCosmeticsHook;
+import net.momirealms.customnameplates.bukkit.compatibility.cosmetic.MagicCosmeticBackpackProvider;
 import net.momirealms.customnameplates.bukkit.compatibility.cosmetic.MagicCosmeticsHook;
 import net.momirealms.customnameplates.bukkit.compatibility.perm.LuckPermsEventListeners;
 import net.momirealms.customnameplates.bukkit.compatibility.quest.TypeWriterListener;
@@ -195,6 +197,23 @@ public class BukkitCustomNameplates extends CustomNameplates implements Listener
             } catch (Throwable ignore) {
             }
         }
+        if (Bukkit.getPluginManager().isPluginEnabled("MagicCosmetic")) {
+            MagicCosmeticBackpackProvider provider = null;
+            try {
+                provider = new MagicCosmeticBackpackProvider();
+                provider.enable(this.getBootstrap());
+                ExternalPassengerRegistry.register(provider);
+            } catch (Throwable t) {
+                getPluginLogger().warn("MagicCosmetic 背包 provider 初始化失败", t);
+                if (provider != null) {
+                    try {
+                        provider.disable();
+                    } catch (Throwable ex) {
+                        getPluginLogger().warn("MagicCosmetic 背包 provider 清理失败", ex);
+                    }
+                }
+            }
+        }
         if (Bukkit.getPluginManager().isPluginEnabled("ECosmetics")) {
             try {
                 Bukkit.getPluginManager().registerEvents(new ECosmeticsHook(this), this.getBootstrap());
@@ -298,6 +317,7 @@ public class BukkitCustomNameplates extends CustomNameplates implements Listener
         if (nameplateManager != null) this.nameplateManager.disable();
         if (imageManager != null) this.imageManager.disable();
         if (chatManager != null) this.chatManager.disable();
+        ExternalPassengerRegistry.unregisterAll();
         if (commandManager != null) {
             if (!Bukkit.getServer().isStopping()) {
                 this.commandManager.unregisterFeatures();

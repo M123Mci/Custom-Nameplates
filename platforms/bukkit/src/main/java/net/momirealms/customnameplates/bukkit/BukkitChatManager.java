@@ -70,6 +70,7 @@ public class BukkitChatManager extends AbstractChatManager {
         }
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     protected void setUpPlatformEmojiProviders() {
         if (Bukkit.getPluginManager().getPlugin("ItemsAdder") != null) {

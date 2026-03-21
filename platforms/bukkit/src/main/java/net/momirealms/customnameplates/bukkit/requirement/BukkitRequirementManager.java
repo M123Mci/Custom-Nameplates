@@ -196,6 +196,7 @@ public class BukkitRequirementManager extends AbstractRequirementManager {
         }, "!environment");
     }
 
+    @SuppressWarnings("deprecation")
     private void registerPotionEffect() {
         this.registerRequirement((args, interval) -> {
             String potions = (String) args;

@@ -8,11 +8,24 @@ val builder : String = builder()
 ext["git_version"] = git
 ext["builder"] = builder
 
+/* ── 本地 Maven 仓库路径解析 ── */
+val resolvedLocalPluginRepoDir: String = (
+    providers.gradleProperty("localPluginRepoDir").orNull
+        ?: System.getenv("LOCAL_PLUGIN_REPO_DIR")
+        ?: "C:/Minecraft/Maven"
+).trim()
+ext["resolvedLocalPluginRepoDir"] = resolvedLocalPluginRepoDir
+
 subprojects {
     apply(plugin = "java")
+    apply(plugin = "maven-publish")
     apply(plugin = "com.gradleup.shadow")
 
     repositories {
+        maven {
+            name = "localPluginRepo"
+            url = uri(file(resolvedLocalPluginRepoDir))
+        }
         mavenCentral()
     }
 
@@ -31,6 +44,24 @@ subprojects {
         }
     }
 }
+
+/* ── 统一构建/发布约定 ── */
+extra["unifiedPluginConfig"] = mapOf(
+    "artifacts" to listOf(
+        mapOf(
+            "projectPath" to ":platforms:bukkit",
+            "taskName" to "shadowJar",
+            "fileName" to "CustomNameplates.jar",
+            "groupId" to rootProject.properties["project_group"],
+            "artifactId" to "CustomNameplates",
+            "copyToDeploy" to true,
+            "copyToBuildJars" to true,
+            "publishToMaven" to true,
+        ),
+    ),
+)
+
+apply(from = rootProject.file("../gradle/unified-plugin-conventions.gradle"))
 
 fun versionBanner(): String = project.providers.exec {
     commandLine("git", "rev-parse", "--short=8", "HEAD")

@@ -1,7 +1,3 @@
-plugins {
-    id("io.github.goooler.shadow") version "8.1.8"
-}
-
 repositories {
     maven("https://repo.papermc.io/repository/maven-public/") // paper
     maven("https://repo.william278.net/releases/") // husk
@@ -65,6 +61,7 @@ dependencies {
     compileOnly("com.github.flestiz:API-ECosmetics:1.0.2")
     compileOnly("com.hibiscusmc:HMCCosmetics:2.8.3")
     compileOnly("me.lojosho:HibiscusCommons:0.8.3")
+    compileOnly("com.magicrealms:MagicCosmetic:local")
 }
 
 java {
@@ -78,5 +75,4 @@ java {
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
     options.release.set(21)
-    dependsOn(tasks.clean)
 }

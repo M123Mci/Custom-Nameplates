@@ -8,6 +8,7 @@ softdepend:
   - PlaceholderAPI
   - LuckPerms
   - MagicCosmetics
+  - MagicCosmetic
   - ECosmetics
   - HMCCosmetics
   - ItemsAdder

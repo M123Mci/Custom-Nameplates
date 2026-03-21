@@ -30,6 +30,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import java.util.Objects;
 
+@SuppressWarnings("deprecation")
 public class AsyncChatProvider extends AbstractChatMessageProvider implements Listener {
 
     public AsyncChatProvider(CustomNameplates plugin, ChatManager manager) {

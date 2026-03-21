@@ -17,6 +17,7 @@
 
 package net.momirealms.customnameplates.backend.feature.tag;
 
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.momirealms.customnameplates.api.CNPlayer;
 import net.momirealms.customnameplates.api.CustomNameplates;
@@ -26,6 +27,7 @@ import net.momirealms.customnameplates.api.feature.tag.Tag;
 import net.momirealms.customnameplates.api.feature.tag.TagRenderer;
 import net.momirealms.customnameplates.api.feature.tag.UnlimitedTagManager;
 import net.momirealms.customnameplates.api.helper.VersionHelper;
+import net.momirealms.customnameplates.api.network.ExternalPassengerRegistry;
 import net.momirealms.customnameplates.api.network.Tracker;
 
 import java.util.*;
@@ -295,6 +297,11 @@ public class TagRendererImpl implements TagRenderer {
     private void updatePassengers(CNPlayer another, Set<Integer> realPassengers) {
         Set<Integer> fakePassengers = owner.getTrackedPassengerIds(another);
         fakePassengers.addAll(realPassengers);
+        /* 合并外部插件 passenger */
+        IntSet externalIds = ExternalPassengerRegistry.collectPassengers(owner, another);
+        if (!externalIds.isEmpty()) {
+            fakePassengers.addAll(externalIds);
+        }
         int[] passengers = new int[fakePassengers.size()];
         int index = 0;
         for (int passenger : fakePassengers) {

@@ -3,7 +3,7 @@ import org.gradle.kotlin.dsl.register
 import xyz.jpenilla.runpaper.task.RunServer
 
 plugins {
-    id("xyz.jpenilla.run-paper") version "3.0.2"
+    id("xyz.jpenilla.run-paper") version "2.3.1"
 }
 
 repositories {
@@ -70,10 +70,6 @@ tasks {
     }
 }
 
-artifacts {
-    archives(tasks.shadowJar)
-}
-
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
@@ -85,7 +81,6 @@ java {
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
     options.release.set(21)
-    dependsOn(tasks.clean)
 }
 
 tasks.register("run-paper", RunServer::class) {
