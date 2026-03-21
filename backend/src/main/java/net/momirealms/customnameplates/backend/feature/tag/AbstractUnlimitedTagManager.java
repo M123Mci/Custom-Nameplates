@@ -249,6 +249,14 @@ public abstract class AbstractUnlimitedTagManager implements UnlimitedTagManager
         }
     }
 
+    @Override
+    public void refreshPassengers(CNPlayer owner) {
+        TagRendererImpl controller = tagRenderers.get(owner.entityID());
+        if (controller != null) {
+            controller.refreshPassengersForViewers();
+        }
+    }
+
     private void loadConfig() {
         YamlDocument document = plugin.getConfigManager().loadConfig("configs" + File.separator + "nameplate.yml",
                 GeneralSettings.builder()

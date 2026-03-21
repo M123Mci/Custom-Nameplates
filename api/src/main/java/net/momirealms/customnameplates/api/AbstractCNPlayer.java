@@ -82,7 +82,8 @@ public abstract class AbstractCNPlayer<P> implements CNPlayer {
     private final Map<Placeholder, Set<Feature>> placeholder2Features = new ConcurrentHashMap<>();
     private final Map<Feature, Set<Placeholder>> feature2Placeholders = new ConcurrentHashMap<>();
 
-    private final Map<CNPlayer, Tracker> trackers = new WeakHashMap<>();
+    /* 使用 Channel 作为稳定键，避免 CNPlayer.hashCode/equals 在 setPlayer() 前后变化导致 tracker 丢失 */
+    private final Map<Channel, Tracker> trackersByChannel = new HashMap<>();
     private final ReadWriteLock trackerLock = new ReentrantReadWriteLock();
     private final Vector<String> otherActionBarFeatures = new Vector<>();
 
@@ -522,12 +523,13 @@ public abstract class AbstractCNPlayer<P> implements CNPlayer {
     public Tracker addPlayerToTracker(CNPlayer another) {
         trackerLock.writeLock().lock();
         try {
-            Tracker tracker = trackers.get(another);
+            Channel key = another.channel();
+            Tracker tracker = trackersByChannel.get(key);
             if (tracker != null) {
                 return tracker;
             }
             tracker = new Tracker(another);
-            trackers.put(another, tracker);
+            trackersByChannel.put(key, tracker);
             return tracker;
         } finally {
             trackerLock.writeLock().unlock();
@@ -538,7 +540,7 @@ public abstract class AbstractCNPlayer<P> implements CNPlayer {
     public void removePlayerFromTracker(CNPlayer another) {
         trackerLock.writeLock().lock();
         try {
-            trackers.remove(another);
+            trackersByChannel.remove(another.channel());
         } finally {
             trackerLock.writeLock().unlock();
         }
@@ -548,8 +550,11 @@ public abstract class AbstractCNPlayer<P> implements CNPlayer {
     public Collection<CNPlayer> nearbyPlayers() {
         trackerLock.readLock().lock();
         try {
-            // Create a snapshot of keys to avoid concurrent modification
-            return new ObjectArrayList<>(trackers.keySet());
+            ObjectArrayList<CNPlayer> result = new ObjectArrayList<>(trackersByChannel.size());
+            for (Tracker tracker : trackersByChannel.values()) {
+                result.add(tracker.tracker());
+            }
+            return result;
         } finally {
             trackerLock.readLock().unlock();
         }
@@ -559,7 +564,7 @@ public abstract class AbstractCNPlayer<P> implements CNPlayer {
     public void trackPassengers(CNPlayer another, int... passengers) {
         trackerLock.writeLock().lock();
         try {
-            Tracker tracker = trackers.get(another);
+            Tracker tracker = trackersByChannel.get(another.channel());
             if (tracker != null) {
                 for (int passenger : passengers) {
                     tracker.addPassengerID(passenger);
@@ -574,7 +579,7 @@ public abstract class AbstractCNPlayer<P> implements CNPlayer {
     public void untrackPassengers(CNPlayer another, int... passengers) {
         trackerLock.writeLock().lock();
         try {
-            Tracker tracker = trackers.get(another);
+            Tracker tracker = trackersByChannel.get(another.channel());
             if (tracker != null) {
                 for (int passenger : passengers) {
                     tracker.removePassengerID(passenger);
@@ -589,7 +594,7 @@ public abstract class AbstractCNPlayer<P> implements CNPlayer {
     public Set<Integer> getTrackedPassengerIds(CNPlayer another) {
         trackerLock.readLock().lock();
         try {
-            Tracker tracker = trackers.get(another);
+            Tracker tracker = trackersByChannel.get(another.channel());
             return tracker != null ? tracker.getPassengerIDs() : new ObjectOpenHashSet<>();
         } finally {
             trackerLock.readLock().unlock();
@@ -600,7 +605,7 @@ public abstract class AbstractCNPlayer<P> implements CNPlayer {
     public Tracker getTracker(CNPlayer another) {
         trackerLock.readLock().lock();
         try {
-            return trackers.get(another);
+            return trackersByChannel.get(another.channel());
         } finally {
             trackerLock.readLock().unlock();
         }

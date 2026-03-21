@@ -99,4 +99,10 @@ public interface TagRenderer {
      * @param tag the tag to remove
      */
     void removeTag(Tag tag);
+
+    /**
+     * 对当前 owner 的所有已追踪 viewer 重发合并后的 passenger 包。
+     * 用于外部 passenger 变化（如背包穿戴/移除）时主动同步挂载链。
+     */
+    void refreshPassengersForViewers();
 }

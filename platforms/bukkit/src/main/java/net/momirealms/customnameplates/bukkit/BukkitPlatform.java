@@ -209,6 +209,8 @@ public class BukkitPlatform implements Platform {
                 CNPlayer added = CustomNameplates.getInstance().getPlayer(entityID);
                 if (added != null) {
                     Tracker tracker = added.addPlayerToTracker(player);
+                    tracker.setScale(added.scale());
+                    tracker.setCrouching(added.isCrouching());
                     tracker.setSpectator(added.isSpectator());
                     CustomNameplates.getInstance().getUnlimitedTagManager().onAddPlayer(added, player);
                 }
@@ -225,6 +227,8 @@ public class BukkitPlatform implements Platform {
                 CNPlayer added = CustomNameplates.getInstance().getPlayer(entityID);
                 if (added != null) {
                     Tracker tracker = added.addPlayerToTracker(player);
+                    tracker.setScale(added.scale());
+                    tracker.setCrouching(added.isCrouching());
                     tracker.setSpectator(added.isSpectator());
                     CustomNameplates.getInstance().getUnlimitedTagManager().onAddPlayer(added, player);
                 }

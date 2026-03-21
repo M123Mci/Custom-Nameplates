@@ -134,4 +134,12 @@ public interface UnlimitedTagManager extends Reloadable, JoinQuitListener {
      */
     @ApiStatus.Internal
     void onPlayerGameModeChange(CNPlayer owner, CNPlayer viewer, boolean isSpectator);
+
+    /**
+     * 刷新指定 owner 对所有已追踪 viewer 的 passenger 包。
+     * 供外部 passenger 提供者在挂载链变化时调用。
+     *
+     * @param owner 拥有 tag 的玩家
+     */
+    void refreshPassengers(CNPlayer owner);
 }

@@ -28,6 +28,8 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import net.momirealms.customnameplates.api.CNPlayer;
+import net.momirealms.customnameplates.api.CustomNameplates;
+import net.momirealms.customnameplates.api.feature.tag.UnlimitedTagManager;
 import net.momirealms.customnameplates.api.network.ExternalPassengerProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -138,6 +140,7 @@ public class MagicCosmeticBackpackProvider implements ExternalPassengerProvider,
 
     /**
      * 玩家装饰数据加载完成，延迟刷新快照（等待背包生成）
+     * 额外补一次更晚的刷新（20 tick），兜底 join 阶段 viewer 列表/bridge 尚未稳定的窗口
      * @param event 加载事件
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -148,16 +151,23 @@ public class MagicCosmeticBackpackProvider implements ExternalPassengerProvider,
                 () -> runSafely(() -> refreshSnapshot(uuid), "onPlayerLoad 刷新快照"),
                 5L
         );
+        /* 兜底延迟：覆盖 join 早期 viewer/bridge 尚未就绪的窗口 */
+        Bukkit.getScheduler().runTaskLater(
+                plugin,
+                () -> runSafely(() -> refreshSnapshot(uuid), "onPlayerLoad 兜底刷新快照"),
+                20L
+        );
     }
 
     /**
-     * 背包装备完成后刷新快照
+     * 背包装备完成后延迟 1 tick 刷新快照（等待背包实体建立完成，避免取到旧快照）
      * @param event 装备事件
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPostEquip(PlayerCosmeticPostEquipEvent event) {
         if (event.getCosmetic().getSlot() == CosmeticSlot.BACKPACK) {
-            runSafely(() -> refreshSnapshot(event.getUniqueId()), "onPostEquip 刷新快照");
+            UUID uuid = event.getUniqueId();
+            Bukkit.getScheduler().runTaskLater(plugin, () -> runSafely(() -> refreshSnapshot(uuid), "onPostEquip 刷新快照"), 1L);
         }
     }
 
@@ -205,28 +215,42 @@ public class MagicCosmeticBackpackProvider implements ExternalPassengerProvider,
     /* ==================== 快照刷新逻辑（主线程） ==================== */
 
     /**
-     * 刷新单个玩家的背包快照
+     * 刷新单个玩家的背包快照，检测变更后触发 passenger 重发
      * @param ownerUUID 玩家 UUID
      */
     private void refreshSnapshot(UUID ownerUUID) {
+        BackpackSnapshot oldSnapshot = snapshots.get(ownerUUID);
+
         CosmeticUser user = CosmeticUsers.getUser(ownerUUID);
         if (user == null) {
             snapshots.remove(ownerUUID);
+            if (oldSnapshot != null && oldSnapshot.bridgeId != 0) {
+                triggerPassengerRefresh(ownerUUID);
+            }
             return;
         }
         /* 衣柜中 / 全局隐藏 / 用户隐藏 → 无背包 */
         if (user.isInWardrobe() || Settings.isAllPlayersHidden() || user.isHidden()) {
             snapshots.put(ownerUUID, BackpackSnapshot.EMPTY);
+            if (oldSnapshot != null && oldSnapshot.bridgeId != 0) {
+                triggerPassengerRefresh(ownerUUID);
+            }
             return;
         }
         UserBackpackManager backpackManager = user.getUserBackpackManager();
         if (backpackManager == null) {
             snapshots.put(ownerUUID, BackpackSnapshot.EMPTY);
+            if (oldSnapshot != null && oldSnapshot.bridgeId != 0) {
+                triggerPassengerRefresh(ownerUUID);
+            }
             return;
         }
         int bridgeId = backpackManager.getBridgeArmorStandId1();
         if (bridgeId == 0 || backpackManager.isBackpackHidden()) {
             snapshots.put(ownerUUID, BackpackSnapshot.EMPTY);
+            if (oldSnapshot != null && oldSnapshot.bridgeId != 0) {
+                triggerPassengerRefresh(ownerUUID);
+            }
             return;
         }
         UserEntity entityManager = backpackManager.getEntityManager();
@@ -245,7 +269,29 @@ public class MagicCosmeticBackpackProvider implements ExternalPassengerProvider,
                 viewerUUIDs = Set.copyOf(temp);
             }
         }
-        snapshots.put(ownerUUID, new BackpackSnapshot(bridgeId, viewerUUIDs));
+        BackpackSnapshot newSnapshot = new BackpackSnapshot(bridgeId, viewerUUIDs);
+        snapshots.put(ownerUUID, newSnapshot);
+
+        /* 检测快照变更：bridgeId 变化或 viewer 集合变化时触发 passenger 重发 */
+        if (oldSnapshot == null
+                || oldSnapshot.bridgeId != newSnapshot.bridgeId
+                || !oldSnapshot.viewerUUIDs.equals(newSnapshot.viewerUUIDs)) {
+            triggerPassengerRefresh(ownerUUID);
+        }
+    }
+
+    /**
+     * 触发指定 owner 的 passenger 重发
+     * @param ownerUUID 玩家 UUID
+     */
+    private void triggerPassengerRefresh(UUID ownerUUID) {
+        CustomNameplates cn = CustomNameplates.getInstance();
+        CNPlayer owner = cn.getPlayer(ownerUUID);
+        if (owner == null) return;
+        UnlimitedTagManager tagManager = cn.getUnlimitedTagManager();
+        if (tagManager != null) {
+            tagManager.refreshPassengers(owner);
+        }
     }
 
     /**
