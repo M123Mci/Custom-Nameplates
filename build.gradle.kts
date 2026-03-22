@@ -8,13 +8,17 @@ val builder : String = builder()
 ext["git_version"] = git
 ext["builder"] = builder
 
-/* ── 本地 Maven 仓库路径解析 ── */
-val resolvedLocalPluginRepoDir: String = (
+/* ── 可选本地 Maven 仓库路径解析（共享构建默认不强依赖） ── */
+val resolvedLocalPluginRepoDir: String? = (
     providers.gradleProperty("localPluginRepoDir").orNull
         ?: System.getenv("LOCAL_PLUGIN_REPO_DIR")
-        ?: "C:/Minecraft/Maven"
-).trim()
-ext["resolvedLocalPluginRepoDir"] = resolvedLocalPluginRepoDir
+)
+    ?.trim()
+    ?.takeIf { it.isNotEmpty() }
+
+if (resolvedLocalPluginRepoDir != null) {
+    ext["resolvedLocalPluginRepoDir"] = resolvedLocalPluginRepoDir
+}
 
 subprojects {
     apply(plugin = "java")
@@ -22,9 +26,12 @@ subprojects {
     apply(plugin = "com.gradleup.shadow")
 
     repositories {
-        maven {
-            name = "localPluginRepo"
-            url = uri(file(resolvedLocalPluginRepoDir))
+        mavenLocal()
+        if (resolvedLocalPluginRepoDir != null) {
+            maven {
+                name = "localPluginRepo"
+                url = uri(file(resolvedLocalPluginRepoDir))
+            }
         }
         mavenCentral()
     }
@@ -61,7 +68,14 @@ extra["unifiedPluginConfig"] = mapOf(
     ),
 )
 
-apply(from = rootProject.file("../gradle/unified-plugin-conventions.gradle"))
+apply(from = rootProject.file("gradle/unified-plugin-conventions.gradle"))
+
+if (providers.gradleProperty("enableLocalBuild").orNull == "true") {
+    val localConventionsFile = rootProject.file("gradle/local-build-conventions.gradle")
+    if (localConventionsFile.exists()) {
+        apply(from = localConventionsFile)
+    }
+}
 
 fun versionBanner(): String = project.providers.exec {
     commandLine("git", "rev-parse", "--short=8", "HEAD")

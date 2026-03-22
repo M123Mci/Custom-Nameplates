@@ -31,7 +31,6 @@ import net.momirealms.customnameplates.api.network.ExternalPassengerRegistry;
 import net.momirealms.customnameplates.api.network.Tracker;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 public class TagRendererImpl implements TagRenderer {
@@ -129,21 +128,8 @@ public class TagRendererImpl implements TagRenderer {
             }
         }
 
-        // 检测真实 passenger 变化，若变化则对所有已追踪 viewer 重发
-        Set<Integer> newPassengers = owner.passengers();
-        boolean passengersChanged = !newPassengers.equals(this.cachedPassengers);
-        this.cachedPassengers = newPassengers;
-
-        if (passengersChanged) {
-            // 真实 passenger 变化，对所有已追踪且有 tag 显示的 viewer 重发
-            for (CNPlayer nearby : nearbyPlayers) {
-                if (!playersToUpdatePassengers.contains(nearby) && hasAnyShownTag(nearby)) {
-                    playersToUpdatePassengers.add(nearby);
-                }
-            }
-        }
-
         // Update passengers
+        this.cachedPassengers = owner.passengers();
         for (CNPlayer nearby : playersToUpdatePassengers) {
             updatePassengers(nearby, this.cachedPassengers);
         }
@@ -305,16 +291,6 @@ public class TagRendererImpl implements TagRenderer {
         }
         if (updatePassengers) {
             updatePassengers(another, this.cachedPassengers);
-            /* 延迟 2 tick 对当前 viewer 重发一次 passenger 包，
-               覆盖 join 阶段外部背包/mount 插件后发包覆盖的窗口。
-               提前捕获 cachedPassengers 快照，避免异步回调中读取平台实时状态 */
-            final CNPlayer viewer = another;
-            final Set<Integer> snapshotPassengers = this.cachedPassengers;
-            CustomNameplates.getInstance().getScheduler().asyncLater(() -> {
-                if (isValid() && hasAnyShownTag(viewer)) {
-                    updatePassengers(viewer, snapshotPassengers);
-                }
-            }, 100, TimeUnit.MILLISECONDS);
         }
     }
 

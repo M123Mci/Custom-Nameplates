@@ -42,3 +42,8 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+# Local build customization (do not commit)
+g.bat
+gradle/local-build-conventions.gradle
+local-build.properties

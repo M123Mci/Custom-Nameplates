@@ -1,0 +1,129 @@
+import org.gradle.api.GradleException
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
+
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+
+def rawConfig = extensions.extraProperties.has("unifiedPluginConfig")
+    ? extensions.extraProperties.get("unifiedPluginConfig")
+    : null
+
+if (!(rawConfig instanceof Map)) {
+    throw new GradleException("Missing root extra property 'unifiedPluginConfig' in ${project.path}")
+}
+
+def artifactSpecs = ((rawConfig.artifacts ?: []) as List).collect { rawArtifact ->
+    if (!(rawArtifact instanceof Map)) {
+        throw new GradleException("Invalid artifact config in ${project.path}: ${rawArtifact}")
+    }
+    def projectPath = (rawArtifact.projectPath ?: ":").toString()
+    def taskName = rawArtifact.taskName?.toString()
+    def fileName = rawArtifact.fileName?.toString()
+    if (!taskName || !fileName) {
+        throw new GradleException("Artifact config must include taskName and fileName in ${project.path}: ${rawArtifact}")
+    }
+    [
+        projectPath: projectPath,
+        taskName   : taskName,
+        fileName   : fileName,
+    ]
+}
+
+if (artifactSpecs.isEmpty()) {
+    throw new GradleException("No artifacts declared in unifiedPluginConfig for ${project.path}")
+}
+
+def resolveProjectForSpec = { Map spec ->
+    spec.projectPath == ":" ? rootProject : rootProject.project(spec.projectPath)
+}
+
+def configureTaskByName = { projectRef, String taskName, Closure action ->
+    projectRef.tasks.configureEach { task ->
+        if (task.name == taskName) {
+            action.call(task)
+        }
+    }
+}
+
+def configureArchiveTaskBySpec = { Map spec, Closure action ->
+    def targetProject = resolveProjectForSpec(spec)
+    configureTaskByName(targetProject, spec.taskName) { task ->
+        if (!(task instanceof AbstractArchiveTask)) {
+            throw new GradleException("Task ${targetProject.path}:${spec.taskName} is not an archive task")
+        }
+        action.call(task)
+    }
+}
+
+def withFileRetry = { String description, Closure operation ->
+    def attempts = 5
+    Exception lastFailure = null
+    for (int attempt = 1; attempt <= attempts; attempt++) {
+        try {
+            return operation.call()
+        } catch (Exception ex) {
+            lastFailure = ex
+            if (attempt == attempts) {
+                throw ex
+            }
+            logger.lifecycle("${description} failed on attempt ${attempt}/${attempts}; retrying: ${ex.message}")
+            sleep(300L * attempt)
+        }
+    }
+    throw lastFailure
+}
+
+def syncSharedBuildJarsTask = tasks.register("syncSharedBuildJars") {
+    group = "build"
+    description = "Copies declared plugin artifacts to resources/build-jars/"
+    doLast {
+        def targetDir = file("${project.rootDir}/resources/build-jars")
+        targetDir.mkdirs()
+        artifactSpecs.each { spec ->
+            def archiveTask = resolveProjectForSpec(spec).tasks.getByName(spec.taskName)
+            if (!(archiveTask instanceof AbstractArchiveTask)) {
+                throw new GradleException("Task ${archiveTask.path} is not an archive task")
+            }
+            def sourceFile = archiveTask.archiveFile.get().asFile
+            if (!sourceFile.exists()) {
+                throw new GradleException("Missing built artifact for ${archiveTask.path}: ${sourceFile.absolutePath}")
+            }
+            def targetFile = new File(targetDir, spec.fileName)
+            withFileRetry("Copy ${sourceFile.absolutePath} to ${targetFile.absolutePath}") {
+                if (targetFile.exists()) {
+                    Files.delete(targetFile.toPath())
+                }
+                Files.copy(sourceFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            }
+        }
+    }
+}
+
+def producerTaskPaths = artifactSpecs.collect { spec ->
+    def targetProject = resolveProjectForSpec(spec)
+    targetProject == rootProject ? ":${spec.taskName}" : "${targetProject.path}:${spec.taskName}"
+}.unique()
+
+artifactSpecs.each { spec ->
+    configureArchiveTaskBySpec(spec) { AbstractArchiveTask archiveTask ->
+        archiveTask.archiveFileName.set(spec.fileName)
+        archiveTask.archiveClassifier.set("")
+        archiveTask.archiveVersion.set("")
+    }
+}
+
+syncSharedBuildJarsTask.configure { dependsOn(producerTaskPaths) }
+
+producerTaskPaths.each { taskPath ->
+    def lastSeparator = taskPath.lastIndexOf(':')
+    def projectPath = lastSeparator <= 0 ? ":" : taskPath.substring(0, lastSeparator)
+    def taskName = taskPath.substring(lastSeparator + 1)
+    def targetProject = projectPath == ":" ? rootProject : rootProject.project(projectPath)
+    configureTaskByName(targetProject, taskName) { task ->
+        task.finalizedBy(syncSharedBuildJarsTask)
+    }
+}
+
+tasks.named("build").configure {
+    dependsOn(producerTaskPaths)
+}
