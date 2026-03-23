@@ -26,13 +26,13 @@ subprojects {
     apply(plugin = "com.gradleup.shadow")
 
     repositories {
-        mavenLocal()
         if (resolvedLocalPluginRepoDir != null) {
             maven {
                 name = "localPluginRepo"
                 url = uri(file(resolvedLocalPluginRepoDir))
             }
         }
+        mavenLocal()
         mavenCentral()
     }
 
@@ -71,13 +71,6 @@ extra["unifiedPluginConfig"] = mapOf(
 )
 
 apply(from = rootProject.file("gradle/unified-plugin-conventions.gradle"))
-
-if (providers.gradleProperty("enableLocalBuild").orNull == "true") {
-    val localConventionsFile = rootProject.file("gradle/local-build-conventions.gradle")
-    if (localConventionsFile.exists()) {
-        apply(from = localConventionsFile)
-    }
-}
 
 fun versionBanner(): String = project.providers.exec {
     commandLine("git", "rev-parse", "--short=8", "HEAD")

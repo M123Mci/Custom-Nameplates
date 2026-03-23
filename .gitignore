@@ -44,6 +44,7 @@ bin/
 .DS_Store
 
 # Local build customization (do not commit)
-g.bat
-gradle/local-build-conventions.gradle
-local-build.properties
+# g.bat (removed) 
+# gradle/local-build-conventions.gradle (removed)
+# local-build.properties (removed)
+psend.bat

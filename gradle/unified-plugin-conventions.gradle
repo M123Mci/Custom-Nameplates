@@ -1,8 +1,31 @@
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+
+def unifiedVersion = "local"
+def normalizeConfiguredPath = { Object rawValue ->
+    if (rawValue == null) {
+        return null
+    }
+    def normalized = rawValue.toString().trim()
+    return normalized.isEmpty() ? null : normalized
+}
+def resolveConfiguredPath = { String propertyName, String envName ->
+    def propertyValue = normalizeConfiguredPath(providers.gradleProperty(propertyName).orNull)
+    propertyValue ?: normalizeConfiguredPath(System.getenv(envName))
+}
+def preResolvedLocalMavenRepoPath = normalizeConfiguredPath(
+    extensions.extraProperties.has("resolvedLocalPluginRepoDir")
+        ? extensions.extraProperties.get("resolvedLocalPluginRepoDir")
+        : null
+)
+def localMavenRepoDir = file(preResolvedLocalMavenRepoPath ?: (resolveConfiguredPath("localPluginRepoDir", "LOCAL_PLUGIN_REPO_DIR") ?: "C:/Minecraft/Maven"))
+
+ext.unifiedPluginVersion = unifiedVersion
+ext.unifiedLocalMavenRepoDir = localMavenRepoDir
 
 def rawConfig = extensions.extraProperties.has("unifiedPluginConfig")
     ? extensions.extraProperties.get("unifiedPluginConfig")
@@ -19,13 +42,20 @@ def artifactSpecs = ((rawConfig.artifacts ?: []) as List).collect { rawArtifact 
     def projectPath = (rawArtifact.projectPath ?: ":").toString()
     def taskName = rawArtifact.taskName?.toString()
     def fileName = rawArtifact.fileName?.toString()
-    if (!taskName || !fileName) {
-        throw new GradleException("Artifact config must include taskName and fileName in ${project.path}: ${rawArtifact}")
+    def groupId = rawArtifact.groupId?.toString()
+    def artifactId = rawArtifact.artifactId?.toString()
+
+    if (!taskName || !fileName || !groupId || !artifactId) {
+        throw new GradleException("Artifact config must include taskName, fileName, groupId and artifactId in ${project.path}: ${rawArtifact}")
     }
+
     [
-        projectPath: projectPath,
-        taskName   : taskName,
-        fileName   : fileName,
+        projectPath    : projectPath,
+        taskName       : taskName,
+        fileName       : fileName,
+        groupId        : groupId,
+        artifactId     : artifactId,
+        publishToMaven : rawArtifact.containsKey("publishToMaven") ? rawArtifact.publishToMaven : true,
     ]
 }
 
@@ -35,6 +65,15 @@ if (artifactSpecs.isEmpty()) {
 
 def resolveProjectForSpec = { Map spec ->
     spec.projectPath == ":" ? rootProject : rootProject.project(spec.projectPath)
+}
+
+def resolveArchiveTask = { Map spec ->
+    def targetProject = resolveProjectForSpec(spec)
+    def task = targetProject.tasks.getByName(spec.taskName)
+    if (!(task instanceof AbstractArchiveTask)) {
+        throw new GradleException("Task ${targetProject.path}:${spec.taskName} is not an archive task")
+    }
+    task
 }
 
 def configureTaskByName = { projectRef, String taskName, Closure action ->
@@ -57,7 +96,7 @@ def configureArchiveTaskBySpec = { Map spec, Closure action ->
 
 def withFileRetry = { String description, Closure operation ->
     def attempts = 5
-    Exception lastFailure = null
+    def lastFailure = null
     for (int attempt = 1; attempt <= attempts; attempt++) {
         try {
             return operation.call()
@@ -66,35 +105,58 @@ def withFileRetry = { String description, Closure operation ->
             if (attempt == attempts) {
                 throw ex
             }
-            logger.lifecycle("${description} failed on attempt ${attempt}/${attempts}; retrying: ${ex.message}")
-            sleep(300L * attempt)
+            logger.lifecycle("${description} failed on attempt ${attempt}/${attempts}; retrying after file lock: ${ex.message}")
+            sleep(500L * attempt)
         }
     }
     throw lastFailure
 }
 
-def syncSharedBuildJarsTask = tasks.register("syncSharedBuildJars") {
-    group = "build"
-    description = "Copies declared plugin artifacts to resources/build-jars/"
+def publishArchiveToLocalRepo = { Map spec ->
+    def archiveTask = resolveArchiveTask(spec)
+    def sourceFile = archiveTask.archiveFile.get().asFile
+    if (!sourceFile.exists()) {
+        throw new GradleException("Missing built artifact for publication ${archiveTask.path}: ${sourceFile.absolutePath}")
+    }
+
+    def artifactDir = new File(localMavenRepoDir, "${spec.groupId.replace('.', '/')}/${spec.artifactId}/${unifiedVersion}")
+    artifactDir.mkdirs()
+
+    def jarFile = new File(artifactDir, "${spec.artifactId}-${unifiedVersion}.jar")
+    def pomFile = new File(artifactDir, "${spec.artifactId}-${unifiedVersion}.pom")
+
+    withFileRetry("Publish ${sourceFile.absolutePath} to ${jarFile.absolutePath}") {
+        if (jarFile.exists()) {
+            Files.delete(jarFile.toPath())
+        }
+        Files.copy(sourceFile.toPath(), jarFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+    }
+
+    def pomText = """<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>${spec.groupId}</groupId>
+  <artifactId>${spec.artifactId}</artifactId>
+  <version>${unifiedVersion}</version>
+  <packaging>jar</packaging>
+</project>
+"""
+    withFileRetry("Write ${pomFile.absolutePath}") {
+        if (pomFile.exists()) {
+            Files.delete(pomFile.toPath())
+        }
+        Files.writeString(pomFile.toPath(), pomText, StandardCharsets.UTF_8)
+    }
+}
+
+def publishUnifiedArtifactsTask = tasks.register("publishUnifiedArtifacts") {
+    group = "publishing"
+    description = "Publishes explicitly declared jars to the shared local Maven repository"
     doLast {
-        def targetDir = file("${project.rootDir}/resources/build-jars")
-        targetDir.mkdirs()
-        artifactSpecs.each { spec ->
-            def archiveTask = resolveProjectForSpec(spec).tasks.getByName(spec.taskName)
-            if (!(archiveTask instanceof AbstractArchiveTask)) {
-                throw new GradleException("Task ${archiveTask.path} is not an archive task")
-            }
-            def sourceFile = archiveTask.archiveFile.get().asFile
-            if (!sourceFile.exists()) {
-                throw new GradleException("Missing built artifact for ${archiveTask.path}: ${sourceFile.absolutePath}")
-            }
-            def targetFile = new File(targetDir, spec.fileName)
-            withFileRetry("Copy ${sourceFile.absolutePath} to ${targetFile.absolutePath}") {
-                if (targetFile.exists()) {
-                    Files.delete(targetFile.toPath())
-                }
-                Files.copy(sourceFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
-            }
+        localMavenRepoDir.mkdirs()
+        artifactSpecs.findAll { it.publishToMaven }.each { spec ->
+            publishArchiveToLocalRepo(spec)
         }
     }
 }
@@ -112,7 +174,10 @@ artifactSpecs.each { spec ->
     }
 }
 
-syncSharedBuildJarsTask.configure { dependsOn(producerTaskPaths) }
+publishUnifiedArtifactsTask.configure {
+    dependsOn(producerTaskPaths)
+    notCompatibleWithConfigurationCache("Script-based local Maven publication uses Groovy task closures.")
+}
 
 producerTaskPaths.each { taskPath ->
     def lastSeparator = taskPath.lastIndexOf(':')
@@ -120,10 +185,18 @@ producerTaskPaths.each { taskPath ->
     def taskName = taskPath.substring(lastSeparator + 1)
     def targetProject = projectPath == ":" ? rootProject : rootProject.project(projectPath)
     configureTaskByName(targetProject, taskName) { task ->
-        task.finalizedBy(syncSharedBuildJarsTask)
+        task.finalizedBy(publishUnifiedArtifactsTask)
     }
 }
 
-tasks.named("build").configure {
-    dependsOn(producerTaskPaths)
+configureTaskByName(rootProject, "build") { task ->
+    task.dependsOn(producerTaskPaths)
 }
+
+configureTaskByName(rootProject, "shadowJar") { task ->
+    def extraTaskPaths = producerTaskPaths.findAll { it != ":shadowJar" }
+    if (!extraTaskPaths.isEmpty()) {
+        task.finalizedBy(extraTaskPaths)
+    }
+}
+
