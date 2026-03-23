@@ -48,3 +48,4 @@ bin/
 # gradle/local-build-conventions.gradle (removed)
 # local-build.properties (removed)
 psend.bat
+jars/

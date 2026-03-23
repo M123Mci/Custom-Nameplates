@@ -59,6 +59,9 @@ def artifactSpecs = ((rawConfig.artifacts ?: []) as List).collect { rawArtifact 
     ]
 }
 
+def sharedJarsDir = rootProject.layout.projectDirectory.dir("jars")
+rootProject.file("jars").mkdirs()
+
 if (artifactSpecs.isEmpty()) {
     throw new GradleException("No artifacts declared in unifiedPluginConfig for ${project.path}")
 }
@@ -168,10 +171,11 @@ def producerTaskPaths = artifactSpecs.collect { spec ->
 
 artifactSpecs.each { spec ->
     configureArchiveTaskBySpec(spec) { AbstractArchiveTask archiveTask ->
+        archiveTask.destinationDirectory.set(rootProject.layout.projectDirectory.dir("jars"))
         archiveTask.archiveFileName.set(spec.fileName)
         archiveTask.archiveClassifier.set("")
         archiveTask.archiveVersion.set("")
-    }
+        }
 }
 
 publishUnifiedArtifactsTask.configure {
