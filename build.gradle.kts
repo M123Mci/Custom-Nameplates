@@ -12,6 +12,7 @@ ext["builder"] = builder
 val resolvedLocalPluginRepoDir: String? = (
     providers.gradleProperty("localPluginRepoDir").orNull
         ?: System.getenv("LOCAL_PLUGIN_REPO_DIR")
+        ?: "C:/PluginLibs/Maven"
 )
     ?.trim()
     ?.takeIf { it.isNotEmpty() }

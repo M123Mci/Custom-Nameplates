@@ -1,3 +1,5 @@
+val externalPluginLibDir = file("C:/PluginLibs")
+
 repositories {
     maven("https://repo.papermc.io/repository/maven-public/") // paper
     maven("https://repo.william278.net/releases/") // husk
@@ -26,12 +28,12 @@ dependencies {
     // Platform
     compileOnly("dev.folia:folia-api:${rootProject.properties["paper_version"]}-R0.1-SNAPSHOT")
     // Chat
-    compileOnly(files("libs/VentureChat-3.7.1.jar"))
-    compileOnly(files("libs/TrChat-2.0.11.jar"))
-    compileOnly(files("libs/AdvancedChat-1.3.7.jar"))
-    compileOnly(files("libs/CMIAPI-9.7.4.1.jar"))
-    compileOnly(files("libs/ChatControl-11.3.1.jar"))
-    compileOnly(files("libs/Typewriter.jar"))
+    compileOnly(files(File(externalPluginLibDir, "VentureChat-3.7.1.jar")))
+    compileOnly(files(File(externalPluginLibDir, "TrChat-2.0.11.jar")))
+    compileOnly(files(File(externalPluginLibDir, "AdvancedChat-1.3.7.jar")))
+    compileOnly(files(File(externalPluginLibDir, "CMIAPI-9.7.4.1.jar")))
+    compileOnly(files(File(externalPluginLibDir, "ChatControl-11.3.1.jar")))
+    compileOnly(files(File(externalPluginLibDir, "Typewriter.jar")))
     compileOnly("de.hexaoxi:carbonchat-api:3.0.0-beta.36")
     compileOnly("net.william278.huskchat:huskchat-bukkit:3.0.4")
     compileOnly("net.essentialsx:EssentialsX:2.20.1") {
@@ -44,7 +46,7 @@ dependencies {
     compileOnly("com.alessiodp.parties:parties-bukkit:3.2.16")
     compileOnly("it.pino.zelchat:zelchat-api:2.0.0-pre-13")
 //    compileOnly("com.github.Brikster:Chatty:v2.19.14")
-    compileOnly(files("libs/Chatty-3.0.0-SNAPSHOT.jar"))
+    compileOnly(files(File(externalPluginLibDir, "Chatty-3.0.0-SNAPSHOT.jar")))
     // Emoji
     compileOnly("dev.lone:api-itemsadder:4.0.10")
     compileOnly("io.th0rgal:oraxen:1.182.0")

@@ -2,6 +2,8 @@ plugins {
     id("maven-publish")
 }
 
+val externalPluginLibDir = file("C:/PluginLibs")
+
 repositories {
     maven("https://jitpack.io/")
     maven("https://repo.papermc.io/repository/maven-public/")
@@ -17,7 +19,7 @@ dependencies {
     compileOnly("net.kyori:adventure-text-serializer-gson:${rootProject.properties["adventure_bundle_version"]}")
     compileOnly("net.kyori:adventure-text-serializer-json-legacy-impl:${rootProject.properties["adventure_bundle_version"]}")
     // YAML
-    implementation(files("libs/boosted-yaml-${rootProject.properties["boosted_yaml_version"]}.jar"))
+    implementation(files(File(externalPluginLibDir, "boosted-yaml-${rootProject.properties["boosted_yaml_version"]}.jar")))
     // Cache
     compileOnly("com.github.ben-manes.caffeine:caffeine:${rootProject.properties["caffeine_version"]}")
     // Netty

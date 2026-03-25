@@ -22,7 +22,7 @@ def preResolvedLocalMavenRepoPath = normalizeConfiguredPath(
         ? extensions.extraProperties.get("resolvedLocalPluginRepoDir")
         : null
 )
-def localMavenRepoDir = file(preResolvedLocalMavenRepoPath ?: (resolveConfiguredPath("localPluginRepoDir", "LOCAL_PLUGIN_REPO_DIR") ?: "C:/Minecraft/Maven"))
+def localMavenRepoDir = file(preResolvedLocalMavenRepoPath ?: (resolveConfiguredPath("localPluginRepoDir", "LOCAL_PLUGIN_REPO_DIR") ?: "C:/PluginLibs/Maven"))
 
 ext.unifiedPluginVersion = unifiedVersion
 ext.unifiedLocalMavenRepoDir = localMavenRepoDir
