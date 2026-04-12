@@ -63,7 +63,6 @@ dependencies {
     compileOnly("com.github.flestiz:API-ECosmetics:1.0.2")
     compileOnly("com.hibiscusmc:HMCCosmetics:2.8.3")
     compileOnly("me.lojosho:HibiscusCommons:0.8.3")
-    compileOnly("com.magicrealms:MagicCosmetic:local")
 }
 
 java {

@@ -43,7 +43,6 @@ import net.momirealms.customnameplates.bukkit.compatibility.NameplatesExpansion;
 import net.momirealms.customnameplates.bukkit.compatibility.NameplatesExtraExpansion;
 import net.momirealms.customnameplates.bukkit.compatibility.cosmetic.ECosmeticsHook;
 import net.momirealms.customnameplates.bukkit.compatibility.cosmetic.HMCCosmeticsHook;
-import net.momirealms.customnameplates.bukkit.compatibility.cosmetic.MagicCosmeticBackpackProvider;
 import net.momirealms.customnameplates.bukkit.compatibility.cosmetic.MagicCosmeticsHook;
 import net.momirealms.customnameplates.bukkit.compatibility.perm.LuckPermsEventListeners;
 import net.momirealms.customnameplates.bukkit.compatibility.quest.TypeWriterListener;
@@ -195,23 +194,6 @@ public class BukkitCustomNameplates extends CustomNameplates implements Listener
             try {
                 Bukkit.getPluginManager().registerEvents(new MagicCosmeticsHook(this), this.getBootstrap());
             } catch (Throwable ignore) {
-            }
-        }
-        if (Bukkit.getPluginManager().isPluginEnabled("MagicCosmetic")) {
-            MagicCosmeticBackpackProvider provider = null;
-            try {
-                provider = new MagicCosmeticBackpackProvider();
-                provider.enable(this.getBootstrap());
-                ExternalPassengerRegistry.register(provider);
-            } catch (Throwable t) {
-                getPluginLogger().warn("MagicCosmetic 背包 provider 初始化失败", t);
-                if (provider != null) {
-                    try {
-                        provider.disable();
-                    } catch (Throwable ex) {
-                        getPluginLogger().warn("MagicCosmetic 背包 provider 清理失败", ex);
-                    }
-                }
             }
         }
         if (Bukkit.getPluginManager().isPluginEnabled("ECosmetics")) {

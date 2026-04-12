@@ -23,6 +23,7 @@ import net.momirealms.customnameplates.api.CNPlayer;
 /**
  * @author Mmu0621
  * @Desc 外部插件 passenger 提供者接口，用于在 mount 包合并时查询外部 passenger
+ *       插件专属兼容请在各自插件内实现并注册，避免在 CustomNameplates 内部硬编码第三方运行态。
  * @date 2026-03-21
  */
 public interface ExternalPassengerProvider {
