@@ -341,8 +341,8 @@ public abstract class ConfigManager implements ConfigLoader, Reloadable {
      * The version of the current configuration.
      */
     protected String configVersion;
-
-    protected float minPackVersion;
+    protected int forceUpdatePassengerInterval;
+    protected int minPackVersion;
     protected boolean stripChatColorTags;
 
     /**
@@ -486,6 +486,7 @@ public abstract class ConfigManager implements ConfigLoader, Reloadable {
         displaySystemChat = config.getBoolean("other-settings.display-system-actionbar", true);
         hideTeamNames = config.getBoolean("other-settings.hide-team-names", true);
         stripChatColorTags = config.getBoolean("other-settings.strip-chat-color-tags", false);
+        forceUpdatePassengerInterval = config.getInt("other-settings.force-update-passenger-interval", -1);
     }
 
     @Override
@@ -493,18 +494,14 @@ public abstract class ConfigManager implements ConfigLoader, Reloadable {
         Reloadable.super.unload();
     }
 
-    private static float getVersion(String version) {
+    private static int getVersion(String version) {
         if (version.equalsIgnoreCase("SERVER_VERSION")) {
             return VersionHelper.version();
         }
-        String[] split = version.split("\\.", 2);
-        if (split.length != 2) {
-            throw new IllegalArgumentException("Invalid version: " + version);
-        }
-        return Float.parseFloat(split[1]);
+        return VersionHelper.parseVersionToInteger(version);
     }
 
-    public static float minPackVersion() {
+    public static int minPackVersion() {
         return instance.minPackVersion;
     }
 
@@ -934,6 +931,10 @@ public abstract class ConfigManager implements ConfigLoader, Reloadable {
 
     public static boolean stripChatColorTags() {
         return instance.stripChatColorTags;
+    }
+
+    public static int forceUpdatePassengerInterval() {
+        return instance.forceUpdatePassengerInterval;
     }
 
     /**

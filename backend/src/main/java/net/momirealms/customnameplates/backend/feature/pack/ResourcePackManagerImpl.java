@@ -72,11 +72,11 @@ public class ResourcePackManagerImpl implements ResourcePackManager {
         this.saveLegacyUnicodes();
 
         if (ConfigManager.enableShader()) {
-            if (ConfigManager.minPackVersion() >= 21.4f) {
+            if (ConfigManager.minPackVersion() >= 12104) {
                 // do nothing
-            } else if (ConfigManager.minPackVersion() >= 21.2f) {
+            } else if (ConfigManager.minPackVersion() >= 12102) {
                 this.generateShaders("ResourcePack" + File.separator + "overlay_1_21_2" + File.separator + "assets" + File.separator + "minecraft" + File.separator + "shaders" + File.separator + "core" + File.separator, true);
-            } else if (ConfigManager.minPackVersion() >= 20.5f) {
+            } else if (ConfigManager.minPackVersion() >= 12005) {
                 this.generateShaders("ResourcePack" + File.separator + "overlay_1_20_5" + File.separator + "assets" + File.separator + "minecraft" + File.separator + "shaders" + File.separator + "core" + File.separator, true);
                 this.generateShaders("ResourcePack" + File.separator + "overlay_1_21_2" + File.separator + "assets" + File.separator + "minecraft" + File.separator + "shaders" + File.separator + "core" + File.separator, true);
             } else {
@@ -179,15 +179,15 @@ public class ResourcePackManagerImpl implements ResourcePackManager {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     private void setPackFormat() {
-        if (ConfigManager.minPackVersion() >= 21.4f) {
+        if (ConfigManager.minPackVersion() >= 12104) {
             plugin.getConfigManager().saveResource("ResourcePack" + File.separator + "pack_1_21_4.mcmeta");
             File file = new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack_1_21_4.mcmeta");
             file.renameTo(new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack.mcmeta"));
-        } else if (ConfigManager.minPackVersion() >= 21.2f) {
+        } else if (ConfigManager.minPackVersion() >= 12102) {
             plugin.getConfigManager().saveResource("ResourcePack" + File.separator + "pack_1_21_2.mcmeta");
             File file = new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack_1_21_2.mcmeta");
             file.renameTo(new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack.mcmeta"));
-        } else if (ConfigManager.minPackVersion() >= 20.5f) {
+        } else if (ConfigManager.minPackVersion() >= 12005) {
             plugin.getConfigManager().saveResource("ResourcePack" + File.separator + "pack_1_20_5.mcmeta");
             File file = new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack_1_20_5.mcmeta");
             file.renameTo(new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack.mcmeta"));

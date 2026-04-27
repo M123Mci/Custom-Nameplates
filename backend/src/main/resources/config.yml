@@ -47,7 +47,7 @@ integrations:
 resource-pack:
   disable-generation-on-start: false  # Allow resource pack generation at server start
   supported-version:
-    # You can specify a version like 1.20.2, 1.21.4 or use SERVER_VERSION
+    # 26.1.2 mainline: use SERVER_VERSION on the target server, or specify a pure numeric version like 26.1.2.
     min: "SERVER_VERSION"
   namespace: "nameplates"             # Namespace for the resource pack
   font: "default"                     # Default font used
@@ -83,6 +83,7 @@ other-settings:
   strip-chat-color-tags: false        # Strip color codes from messages provided by external chat API
   default-condition-refresh-interval: 10  # Set default condition refresh interval in ticks
   default-placeholder-refresh-interval: 1  # Set default placeholder refresh interval in ticks
+  force-update-passenger-interval: -1 # Some plugin/servers may cause nameplates to become out of sync. This option allows you to set the interval for forcibly syncing tag positions.
   placeholder-refresh-interval:       # Custom placeholder refresh intervals for performance optimization
     "%player_name%": 100
     "%vault_prefix%": 20

@@ -22,7 +22,7 @@ dependencies {
     implementation(project(":backend"))
     implementation(project(":platforms:bukkit:compatibility"))
 
-    compileOnly("dev.folia:folia-api:${rootProject.properties["paper_version"]}-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:${rootProject.properties["paper_version"]}-R0.1-SNAPSHOT")
     compileOnly("me.clip:placeholderapi:${rootProject.properties["placeholder_api_version"]}")
 
     // YAML

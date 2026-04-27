@@ -84,39 +84,33 @@ public class VersionHelper {
     }
 
     public static int parseVersionToInteger(String versionString) {
-        int major = 0;
-        int minor = 0;
-        int currentNumber = 0;
-        int part = 0;
-        for (int i = 0; i < versionString.length(); i++) {
-            char c = versionString.charAt(i);
-            if (c >= '0' && c <= '9') {
-                currentNumber = currentNumber * 10 + (c - '0');
-            } else if (c == '.') {
-                if (part == 1) {
-                    major = currentNumber;
-                }
-                part++;
-                currentNumber = 0;
-                if (part > 2) {
-                    break;
+        String[] parts = versionString.split("\\.", -1);
+        if (parts.length < 2 || parts.length > 3) {
+            throw new IllegalArgumentException("Invalid version: " + versionString);
+        }
+        int[] versions = new int[3];
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i];
+            if (part.isEmpty()) {
+                throw new IllegalArgumentException("Invalid version: " + versionString);
+            }
+            for (int j = 0; j < part.length(); j++) {
+                char c = part.charAt(j);
+                if (c < '0' || c > '9') {
+                    throw new IllegalArgumentException("Invalid version: " + versionString);
                 }
             }
+            versions[i] = Integer.parseInt(part);
         }
-        if (part == 1) {
-            major = currentNumber;
-        } else if (part == 2) {
-            minor = currentNumber;
-        }
-        return 10000 + major * 100 + minor;
+        return 10000 * versions[0] + versions[1] * 100 + versions[2];
     }
 
     /**
-     * Gets the current server version as a float.
+     * Gets the current server version as an encoded integer.
      *
-     * @return The server version as a float.
+     * @return The server version as an encoded integer.
      */
-    public static float version() {
+    public static int version() {
         return version;
     }
 
@@ -183,15 +177,6 @@ public class VersionHelper {
     }
 
     /**
-     * Checks if the server version is newer than 1.21.4
-     *
-     * @return True if the version is newer than 1.21.4, otherwise false.
-     */
-    public static boolean isVersionNewerThan1_21_4() {
-        return version >= 12104;
-    }
-
-    /**
      * Checks if the server version is newer than 1.21.2.
      *
      * @return True if the version is newer than 1.21.2, otherwise false.
@@ -234,15 +219,6 @@ public class VersionHelper {
      */
     public static boolean isVersionNewerThan1_20_2() {
         return version >= 12002;
-    }
-
-    /**
-     * Checks if the server version is newer than 1.20.
-     *
-     * @return True if the version is newer than 1.20, otherwise false.
-     */
-    public static boolean isVersionNewerThan1_20() {
-        return version >= 12000;
     }
 
     /**

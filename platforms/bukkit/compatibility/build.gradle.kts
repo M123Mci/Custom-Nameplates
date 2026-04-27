@@ -26,7 +26,7 @@ dependencies {
     // WorldGuard
     compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.9")
     // Platform
-    compileOnly("dev.folia:folia-api:${rootProject.properties["paper_version"]}-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:${rootProject.properties["paper_version"]}-R0.1-SNAPSHOT")
     // Chat
     compileOnly(files(File(externalPluginLibDir, "VentureChat-3.7.1.jar")))
     compileOnly(files(File(externalPluginLibDir, "TrChat-2.0.11.jar")))
