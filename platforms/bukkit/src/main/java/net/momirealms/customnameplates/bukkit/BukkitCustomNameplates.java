@@ -140,12 +140,6 @@ public class BukkitCustomNameplates extends CustomNameplates implements Listener
 
     @Override
     public void enable() {
-        if (!VersionHelper.isVersionNewerThan1_19_4()) {
-            getPluginLogger().severe("CustomNameplates only supports 1.19.4+ servers");
-            Bukkit.getPluginManager().disablePlugin(this.getBootstrap());
-            return;
-        }
-
         this.mainTask = new MainTask(this);
 
         this.networkManager = new BukkitNetworkManager(this);

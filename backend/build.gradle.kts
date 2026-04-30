@@ -31,6 +31,14 @@ dependencies {
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
-    options.release.set(21)
+    options.release.set(rootProject.properties["java_release_version"].toString().toInt())
     dependsOn(tasks.clean)
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(rootProject.properties["java_toolchain_version"].toString().toInt())
+    }
 }

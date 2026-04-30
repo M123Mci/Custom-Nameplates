@@ -301,7 +301,7 @@ public abstract class AbstractUnlimitedTagManager implements UnlimitedTagManager
                             .id(entry.getKey())
                             .ownerRequirement(plugin.getRequirementManager().parseRequirements(section.getSection("owner-conditions")))
                             .viewerRequirement(plugin.getRequirementManager().parseRequirements(section.getSection("viewer-conditions")))
-                            .translation(VersionHelper.isVersionNewerThan1_20_2() ? translation : translation.add(0,0.5,0))
+                            .translation(translation)
                             .scale(ConfigUtils.vector3(section.getString("scale", "1,1,1")))
                             .alignment(section.getEnum("alignment", Alignment.class, Alignment.CENTER))
                             .billboard(section.getEnum("billboard", Billboard.class, Billboard.CENTER))

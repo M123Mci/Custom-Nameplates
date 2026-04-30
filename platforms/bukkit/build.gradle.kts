@@ -2,6 +2,8 @@ import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.register
 import xyz.jpenilla.runpaper.task.RunServer
 
+val serverLibrariesDir = file(rootProject.properties["paper_server_lib_dir"].toString())
+
 plugins {
     id("xyz.jpenilla.run-paper") version "2.3.1"
 }
@@ -22,7 +24,11 @@ dependencies {
     implementation(project(":backend"))
     implementation(project(":platforms:bukkit:compatibility"))
 
-    compileOnly("io.papermc.paper:paper-api:${rootProject.properties["paper_version"]}-R0.1-SNAPSHOT")
+    compileOnly(files(rootProject.properties["paper_api_jar"].toString()))
+    compileOnly(files(File(serverLibrariesDir, "it/unimi/dsi/fastutil/8.5.18/fastutil-8.5.18.jar")))
+    compileOnly(files(File(serverLibrariesDir, "com/google/guava/guava/33.5.0-jre/guava-33.5.0-jre.jar")))
+    compileOnly(files(File(serverLibrariesDir, "com/mojang/brigadier/1.3.10/brigadier-1.3.10.jar")))
+    compileOnly(files(File(serverLibrariesDir, "net/md-5/bungeecord-chat/1.21-R0.2-deprecated+build.21/bungeecord-chat-1.21-R0.2-deprecated+build.21.jar")))
     compileOnly("me.clip:placeholderapi:${rootProject.properties["placeholder_api_version"]}")
 
     // YAML
@@ -74,23 +80,23 @@ java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(rootProject.properties["java_toolchain_version"].toString().toInt())
     }
 }
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
-    options.release.set(21)
+    options.release.set(rootProject.properties["java_release_version"].toString().toInt())
 }
 
 tasks.register("run-paper", RunServer::class) {
     group = "run paper"
     workingDir("run")
     pluginJars.from(tasks.shadowJar.flatMap { it.archiveFile })
-    minecraftVersion("1.21.11")
+    minecraftVersion("26.1.2")
     javaLauncher = javaToolchains.launcherFor {
         vendor = JvmVendorSpec.JETBRAINS
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(rootProject.properties["java_toolchain_version"].toString().toInt())
     }
     jvmArgs("-Dsun.stdout.encoding=UTF-8")
     jvmArgs("-Dsun.stderr.encoding=UTF-8")

@@ -26,7 +26,7 @@ dependencies {
     // WorldGuard
     compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.9")
     // Platform
-    compileOnly("io.papermc.paper:paper-api:${rootProject.properties["paper_version"]}-R0.1-SNAPSHOT")
+    compileOnly(files(rootProject.properties["paper_api_jar"].toString()))
     // Chat
     compileOnly(files(File(externalPluginLibDir, "VentureChat-3.7.1.jar")))
     compileOnly(files(File(externalPluginLibDir, "TrChat-2.0.11.jar")))
@@ -69,11 +69,11 @@ java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(rootProject.properties["java_toolchain_version"].toString().toInt())
     }
 }
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
-    options.release.set(21)
+    options.release.set(rootProject.properties["java_release_version"].toString().toInt())
 }

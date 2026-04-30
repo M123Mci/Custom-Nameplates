@@ -37,7 +37,7 @@ public final class BukkitReflectionUtils {
     static {
         final Class<?> serverClass;
         if (Bukkit.getServer() == null) {
-            // Paper plugin Bootstrapper 1.20.6+
+            // Paper bootstrap phase.
             serverClass = Objects.requireNonNull(ReflectionUtils.getClazz("org.bukkit.craftbukkit.CraftServer"));
         } else {
             serverClass = Bukkit.getServer().getClass();
@@ -53,7 +53,7 @@ public final class BukkitReflectionUtils {
                 } catch (final Exception ignored) {
                 }
             } else {
-                // Paper plugin bootstrapper 1.20.6+
+                // Paper bootstrap phase.
                 try {
                     final Class<?> sharedConstants = Objects.requireNonNull(ReflectionUtils.getClazz("net.minecraft.SharedConstants"));
                     final Method getCurrentVersion = sharedConstants.getDeclaredMethod("getCurrentVersion");

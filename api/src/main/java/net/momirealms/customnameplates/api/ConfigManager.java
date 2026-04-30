@@ -29,7 +29,6 @@ import dev.dejvokep.boostedyaml.utils.format.NodeRole;
 import net.momirealms.customnameplates.api.feature.CharacterArranger;
 import net.momirealms.customnameplates.api.feature.bossbar.BossBar;
 import net.momirealms.customnameplates.api.helper.AdventureHelper;
-import net.momirealms.customnameplates.api.helper.VersionHelper;
 import net.momirealms.customnameplates.common.locale.TranslationManager;
 import net.momirealms.customnameplates.common.plugin.CustomNameplatesProperties;
 import net.momirealms.customnameplates.common.plugin.config.ConfigLoader;
@@ -208,39 +207,9 @@ public abstract class ConfigManager implements ConfigLoader, Reloadable {
     protected String backgroundPath;
 
     /**
-     * Flag to enable or disable shader effects.
-     */
-    protected boolean enableShader;
-
-    /**
-     * Flag to hide or show scoreboard numbers.
-     */
-    protected boolean hideScoreBoardNumber;
-
-    /**
-     * Flag to enable or disable animated text.
-     */
-    protected boolean animatedText;
-
-    /**
-     * Flag to enable or disable the ItemsAdder effect.
-     */
-    protected boolean itemsAdderEffect;
-
-    /**
      * The color used for the boss bar when removed.
      */
     protected BossBar.Color removedBarColor;
-
-    /**
-     * Flag to enable compatibility for version 1.20.2 of Minecraft.
-     */
-    protected boolean bossBar1_20_2;
-
-    /**
-     * Flag to enable compatibility for version 1.17 of Minecraft.
-     */
-    protected boolean bossBar1_17;
 
     /**
      * Flag to enable or disable legacy Unicode support.
@@ -342,7 +311,6 @@ public abstract class ConfigManager implements ConfigLoader, Reloadable {
      */
     protected String configVersion;
     protected int forceUpdatePassengerInterval;
-    protected int minPackVersion;
     protected boolean stripChatColorTags;
 
     /**
@@ -464,18 +432,8 @@ public abstract class ConfigManager implements ConfigLoader, Reloadable {
         bubblePath = config.getString("resource-pack.image-path.bubbles", "font/bubbles/");
         spaceSplitPath = config.getString("resource-pack.image-path.space-split", "font/base/");
 
-        enableShader = config.getBoolean("resource-pack.shader.enable", true);
-        hideScoreBoardNumber = config.getBoolean("resource-pack.shader.hide-scoreboard-number", false);
-        animatedText = config.getBoolean("resource-pack.shader.animated-text", false);
-        itemsAdderEffect = config.getBoolean("resource-pack.shader.ItemsAdder-text-effects", false);
-
         removedBarColor = BossBar.Color.valueOf(config.getString("resource-pack.transparent-bossbar.color", "YELLOW").toUpperCase(Locale.ENGLISH));
-        bossBar1_20_2 = config.getBoolean("resource-pack.transparent-bossbar.1_20_2+", true);
-        bossBar1_17 = config.getBoolean("resource-pack.transparent-bossbar.1_17-1_20_1", true);
-
         legacyUnicodes = config.getBoolean("resource-pack.legacy-unicodes", true);
-
-        minPackVersion = getVersion(config.getString("resource-pack.supported-version.min", "SERVER_VERSION"));
 
         // Other settings
         delaySend = config.getInt("other-settings.send-delay", 0);
@@ -492,17 +450,6 @@ public abstract class ConfigManager implements ConfigLoader, Reloadable {
     @Override
     public void unload() {
         Reloadable.super.unload();
-    }
-
-    private static int getVersion(String version) {
-        if (version.equalsIgnoreCase("SERVER_VERSION")) {
-            return VersionHelper.version();
-        }
-        return VersionHelper.parseVersionToInteger(version);
-    }
-
-    public static int minPackVersion() {
-        return instance.minPackVersion;
     }
 
     /**
@@ -682,30 +629,6 @@ public abstract class ConfigManager implements ConfigLoader, Reloadable {
     }
 
     /**
-     * Retrieves whether the scoreboard numbers should be hidden.
-     * @return true if scoreboard numbers are hidden; false otherwise.
-     */
-    public static boolean hideScoreBoardNumber() {
-        return instance.hideScoreBoardNumber;
-    }
-
-    /**
-     * Retrieves whether animated text is enabled.
-     * @return true if animated text is enabled; false otherwise.
-     */
-    public static boolean animatedText() {
-        return instance.animatedText;
-    }
-
-    /**
-     * Retrieves whether the ItemsAdder effect is enabled.
-     * @return true if the ItemsAdder effect is enabled; false otherwise.
-     */
-    public static boolean itemsAdderEffect() {
-        return instance.itemsAdderEffect;
-    }
-
-    /**
      * Retrieves the color to be used for a removed boss bar.
      * @return the color for the removed bar.
      */
@@ -818,35 +741,11 @@ public abstract class ConfigManager implements ConfigLoader, Reloadable {
     }
 
     /**
-     * Retrieves whether shader effects are enabled.
-     * @return true if shader effects are enabled; false otherwise.
-     */
-    public static boolean enableShader() {
-        return instance.enableShader;
-    }
-
-    /**
      * Retrieves whether legacy Unicode support is enabled.
      * @return true if legacy Unicode support is enabled; false otherwise.
      */
     public static boolean legacyUnicodes() {
         return instance.legacyUnicodes;
-    }
-
-    /**
-     * Retrieves whether compatibility with Minecraft 1.20.2 is enabled for the boss bar.
-     * @return true if the boss bar is compatible with Minecraft 1.20.2; false otherwise.
-     */
-    public static boolean bossBar1_20_2() {
-        return instance.bossBar1_20_2;
-    }
-
-    /**
-     * Retrieves whether compatibility with Minecraft 1.17 is enabled for the boss bar.
-     * @return true if the boss bar is compatible with Minecraft 1.17; false otherwise.
-     */
-    public static boolean bossBar1_17() {
-        return instance.bossBar1_17;
     }
 
     /**

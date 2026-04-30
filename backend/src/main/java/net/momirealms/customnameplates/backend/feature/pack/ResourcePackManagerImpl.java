@@ -41,7 +41,6 @@ import org.apache.commons.io.FileUtils;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class ResourcePackManagerImpl implements ResourcePackManager {
@@ -71,20 +70,7 @@ public class ResourcePackManagerImpl implements ResourcePackManager {
         // save unicodes
         this.saveLegacyUnicodes();
 
-        if (ConfigManager.enableShader()) {
-            if (ConfigManager.minPackVersion() >= 12104) {
-                // do nothing
-            } else if (ConfigManager.minPackVersion() >= 12102) {
-                this.generateShaders("ResourcePack" + File.separator + "overlay_1_21_2" + File.separator + "assets" + File.separator + "minecraft" + File.separator + "shaders" + File.separator + "core" + File.separator, true);
-            } else if (ConfigManager.minPackVersion() >= 12005) {
-                this.generateShaders("ResourcePack" + File.separator + "overlay_1_20_5" + File.separator + "assets" + File.separator + "minecraft" + File.separator + "shaders" + File.separator + "core" + File.separator, true);
-                this.generateShaders("ResourcePack" + File.separator + "overlay_1_21_2" + File.separator + "assets" + File.separator + "minecraft" + File.separator + "shaders" + File.separator + "core" + File.separator, true);
-            } else {
-                this.generateShaders("ResourcePack" + File.separator + "overlay_1_20_2" + File.separator + "assets" + File.separator + "minecraft" + File.separator + "shaders" + File.separator + "core" + File.separator, false);
-                this.generateShaders("ResourcePack" + File.separator + "overlay_1_20_5" + File.separator + "assets" + File.separator + "minecraft" + File.separator + "shaders" + File.separator + "core" + File.separator, true);
-                this.generateShaders("ResourcePack" + File.separator + "overlay_1_21_2" + File.separator + "assets" + File.separator + "minecraft" + File.separator + "shaders" + File.separator + "core" + File.separator, true);
-            }
-        }
+        // 26.1.2 uses the 1.21.4+ resource-pack format and does not require legacy shader overlays.
 
         // create json object
         JsonObject fontJson = new JsonObject();
@@ -179,21 +165,9 @@ public class ResourcePackManagerImpl implements ResourcePackManager {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     private void setPackFormat() {
-        if (ConfigManager.minPackVersion() >= 12104) {
-            plugin.getConfigManager().saveResource("ResourcePack" + File.separator + "pack_1_21_4.mcmeta");
-            File file = new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack_1_21_4.mcmeta");
-            file.renameTo(new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack.mcmeta"));
-        } else if (ConfigManager.minPackVersion() >= 12102) {
-            plugin.getConfigManager().saveResource("ResourcePack" + File.separator + "pack_1_21_2.mcmeta");
-            File file = new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack_1_21_2.mcmeta");
-            file.renameTo(new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack.mcmeta"));
-        } else if (ConfigManager.minPackVersion() >= 12005) {
-            plugin.getConfigManager().saveResource("ResourcePack" + File.separator + "pack_1_20_5.mcmeta");
-            File file = new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack_1_20_5.mcmeta");
-            file.renameTo(new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack.mcmeta"));
-        } else {
-            plugin.getConfigManager().saveResource("ResourcePack" + File.separator + "pack.mcmeta");
-        }
+        plugin.getConfigManager().saveResource("ResourcePack" + File.separator + "pack_1_21_4.mcmeta");
+        File file = new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack_1_21_4.mcmeta");
+        file.renameTo(new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack.mcmeta"));
         plugin.getConfigManager().saveResource("ResourcePack" + File.separator + "pack.png");
     }
 
@@ -460,40 +434,10 @@ public class ResourcePackManagerImpl implements ResourcePackManager {
     }
 
     private void saveBossBar() {
-        if (ConfigManager.bossBar1_20_2()) {
-            String color = ConfigManager.removedBarColor().name().toLowerCase(Locale.ENGLISH);
-            String path = "ResourcePack" + File.separator + "assets" + File.separator + "minecraft" + File.separator + "textures" + File.separator + "gui" + File.separator + "sprites" + File.separator + "boss_bar" + File.separator;
-            plugin.getConfigManager().saveResource(path + color + "_background.png");
-            plugin.getConfigManager().saveResource(path + color + "_progress.png");
-        }
-        if (ConfigManager.bossBar1_17()) {
-            String path = "ResourcePack" + File.separator + "assets" + File.separator + "minecraft" + File.separator + "textures" + File.separator + "gui" + File.separator + "bars.png";
-            plugin.getConfigManager().saveResource(path);
-            try {
-                File inputFile = new File(plugin.getDataFolder(), path);
-                BufferedImage image = ImageIO.read(inputFile);
-                int y;
-                switch (ConfigManager.removedBarColor()) {
-                    case PINK -> y = 0;
-                    case BLUE -> y = 10;
-                    case RED -> y = 20;
-                    case GREEN -> y = 30;
-                    case PURPLE -> y = 50;
-                    case WHITE -> y = 60;
-                    default -> y = 40;
-                }
-                int width = 182;
-                int height = 10;
-                for (int i = 0; i < width; i++) {
-                    for (int j = y; j < y + height; j++) {
-                        image.setRGB(i, j, 0);
-                    }
-                }
-                ImageIO.write(image, "png", inputFile);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        String color = ConfigManager.removedBarColor().name().toLowerCase(Locale.ENGLISH);
+        String path = "ResourcePack" + File.separator + "assets" + File.separator + "minecraft" + File.separator + "textures" + File.separator + "gui" + File.separator + "sprites" + File.separator + "boss_bar" + File.separator;
+        plugin.getConfigManager().saveResource(path + color + "_background.png");
+        plugin.getConfigManager().saveResource(path + color + "_progress.png");
     }
 
     private void saveLegacyUnicodes() {
@@ -514,183 +458,4 @@ public class ResourcePackManagerImpl implements ResourcePackManager {
         }
     }
 
-    private void generateShaders(String path, boolean v1_20_5) {
-
-        plugin.getConfigManager().saveResource(path + "rendertype_text.fsh");
-        plugin.getConfigManager().saveResource(path + "rendertype_text.json");
-        plugin.getConfigManager().saveResource(path + "rendertype_text.vsh");
-
-        String line;
-        StringBuilder sb1 = new StringBuilder();
-        File shader1 = new File(plugin.getDataFolder(), path + "rendertype_text.vsh");
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(shader1), StandardCharsets.UTF_8))) {
-            while ((line = reader.readLine()) != null) {
-                sb1.append(line).append(System.lineSeparator());
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        String mainShader = v1_20_5 ? ShaderConstants.Nameplates_Shader_1_20_5 : ShaderConstants.Nameplates_Shader_1_20_4;
-        try (BufferedWriter writer = new BufferedWriter(
-                new OutputStreamWriter(new FileOutputStream(shader1), StandardCharsets.UTF_8))) {
-            writer.write(sb1.toString()
-                    .replace("%SHADER_0%", !ConfigManager.animatedText() ? "" : ShaderConstants.Animated_Text_Out)
-                    .replace("%SHADER_1%", !ConfigManager.itemsAdderEffect() ? mainShader : ShaderConstants.ItemsAdder_Text_Effects + mainShader)
-                    .replace("%SHADER_2%", !ConfigManager.animatedText() ? "" : ShaderConstants.Animated_Text_VSH)
-                    .replace("%SHADER_3%", !ConfigManager.hideScoreBoardNumber() ? "" : ShaderConstants.Hide_ScoreBoard_Numbers)
-            );
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        File shader2 = new File(plugin.getDataFolder(), path + "rendertype_text.fsh");
-        StringBuilder sb2 = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(shader2), StandardCharsets.UTF_8))) {
-            while ((line = reader.readLine()) != null) {
-                sb2.append(line).append(System.lineSeparator());
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        try (BufferedWriter writer = new BufferedWriter(
-                new OutputStreamWriter(new FileOutputStream(shader2), StandardCharsets.UTF_8))) {
-            writer.write(sb2.toString()
-                    .replace("%SHADER_0%", !ConfigManager.animatedText() ? "" : ShaderConstants.Animated_Text_In)
-                    .replace("%SHADER_1%", !ConfigManager.animatedText() ? "" : ShaderConstants.Animated_Text_FSH)
-            );
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static class ShaderConstants {
-
-        public static final String Nameplates_Shader_1_20_5 =
-                        "if (Color.xyz == vec3(255., 254., 253.) / 255. && (Position.z == 50.03 || Position.z == 200.03 || Position.z == 400.03 || Position.z == 1000.03 || Position.z == 2000 || Position.z == 2200.03 || Position.z == 2400.06 || Position.z == 2400.12 || Position.z == 2650.03 || Position.z == 2800.03)) {\n" +
-                        "        vertexColor = Color * texelFetch(Sampler2, UV2 / 16, 0);\n" +
-                        "        vertex.y += 1;\n" +
-                        "        vertex.x += 1;\n" +
-                        "        gl_Position = ProjMat * ModelViewMat * vertex;\n" +
-                        "    } else if (Color.xyz == vec3(240., 240., 240.) / 255.) {\n" +
-                        "        vertexColor = Color * texelFetch(Sampler2, UV2 / 16, 0);\n" +
-                        "        vertexColor.rgb = texelFetch(Sampler2, UV2 / 16, 0).rgb;\n" +
-                        "        gl_Position = ProjMat * ModelViewMat * vertex;\n" +
-                        "    } else if (Color.xyz == vec3(60., 60., 60.) / 255.) {\n" +
-                        "        vertexColor = Color * texelFetch(Sampler2, UV2 / 16, 0);\n" +
-                        "        depthLevel = 114514.0;\n" +
-                        "        gl_Position = ProjMat * ModelViewMat * vertex;\n" +
-                        "    } else {\n" +
-                        "        vertexColor = Color * texelFetch(Sampler2, UV2 / 16, 0);\n" +
-                        "        gl_Position = ProjMat * ModelViewMat * vertex;\n" +
-                        "    }";
-
-        public static final String Nameplates_Shader_1_20_4 =
-                        "if (Color.xyz == vec3(255., 254., 253.) / 255. && (Position.z == 0.03 || Position.z == 0.06 || Position.z == 0.12 || Position.z == 100.03 || Position.z == 200.03 || Position.z == 400.03)) {\n" +
-                        "        vertexColor = Color * texelFetch(Sampler2, UV2 / 16, 0);\n" +
-                        "        vertex.y += 1;\n" +
-                        "        vertex.x += 1;\n" +
-                        "        gl_Position = ProjMat * ModelViewMat * vertex;\n" +
-                        "    } else if (Color.xyz == vec3(240., 240., 240.) / 255.) {\n" +
-                        "        vertexColor = Color * texelFetch(Sampler2, UV2 / 16, 0);\n" +
-                        "        vertexColor.rgb = texelFetch(Sampler2, UV2 / 16, 0).rgb;\n" +
-                        "        gl_Position = ProjMat * ModelViewMat * vertex;\n" +
-                        "    } else if (Color.xyz == vec3(60., 60., 60.) / 255.) {\n" +
-                        "        vertexColor = Color * texelFetch(Sampler2, UV2 / 16, 0);\n" +
-                        "        depthLevel = 114514.0;\n" +
-                        "        gl_Position = ProjMat * ModelViewMat * vertex;\n" +
-                        "    } else {\n" +
-                        "        vertexColor = Color * texelFetch(Sampler2, UV2 / 16, 0);\n" +
-                        "        gl_Position = ProjMat * ModelViewMat * vertex;\n" +
-                        "    }";
-
-        public static final String ItemsAdder_Text_Effects =
-                        "if (Color.xyz == vec3(255., 255., 254.) / 255.) {\n" +
-                        "        gl_Position = ProjMat * ModelViewMat * vertex;\n" +
-                        "        vertexColor = ((.6 + .6 * cos(6. * (gl_Position.x + GameTime * 1000.) + vec4(0, 23, 21, 1))) + vec4(0., 0., 0., 1.)) * texelFetch(Sampler2, UV2 / 16, 0);\n" +
-                        "    } else if (Color.xyz == vec3(255., 255., 253.) / 255.) {\n" +
-                        "        gl_Position = ProjMat * ModelViewMat * vertex;\n" +
-                        "        vertexColor = Color * texelFetch(Sampler2, UV2 / 16, 0);\n" +
-                        "        gl_Position.y = gl_Position.y + sin(GameTime * 12000. + (gl_Position.x * 6)) / 150.;\n" +
-                        "    } else if (Color.xyz == vec3(255., 255., 252.) / 255.) {\n" +
-                        "        gl_Position = ProjMat * ModelViewMat * vertex;\n" +
-                        "        vertexColor = ((.6 + .6 * cos(6. * (gl_Position.x + GameTime * 1000.) + vec4(0, 23, 21, 1))) + vec4(0., 0., 0., 1.)) * texelFetch(Sampler2, UV2 / 16, 0);\n" +
-                        "        gl_Position.y = gl_Position.y + sin(GameTime*12000. + (gl_Position.x*6)) / 150.;\n" +
-                        "    } else if (Color.xyz == vec3(255., 255., 251.) / 255.) {\n" +
-                        "        vertexColor = Color * texelFetch(Sampler2, UV2 / 16, 0);\n" +
-                        "        float vertexId = mod(gl_VertexID, 4.0);\n" +
-                        "        if (vertex.z <= 0.) {\n" +
-                        "            if (vertexId == 3. || vertexId == 0.) vertex.y += cos(GameTime * 12000. / 4) * 0.1;\n" +
-                        "            vertex.y += max(cos(GameTime*12000. / 4) * 0.1, 0.);\n" +
-                        "        } else {\n" +
-                        "            if (vertexId == 3. || vertexId == 0.) vertex.y -= cos(GameTime * 12000. / 4) * 3;\n" +
-                        "            vertex.y -= max(cos(GameTime*12000. / 4) * 4, 0.);\n" +
-                        "        }\n" +
-                        "        gl_Position = ProjMat * ModelViewMat * vertex;\n" +
-                        "    } else if (Color.xyz == vec3(255., 254., 254.) / 255.) {\n" +
-                        "        float vertexId = mod(gl_VertexID, 4.0);\n" +
-                        "        if (vertex.z <= 0.) {\n" +
-                        "            if (vertexId == 3. || vertexId == 0.) vertex.y += cos(GameTime * 12000. / 4) * 0.1;\n" +
-                        "            vertex.y += max(cos(GameTime*12000. / 4) * 0.1, 0.);\n" +
-                        "        } else {\n" +
-                        "            if (vertexId == 3. || vertexId == 0.) vertex.y -= cos(GameTime * 12000. / 4) * 3;\n" +
-                        "            vertex.y -= max(cos(GameTime*12000. / 4) * 4, 0.);\n" +
-                        "        }\n" +
-                        "        vertexColor = ((.6 + .6 * cos(6. * (gl_Position.x + GameTime * 1000.) + vec4(0, 23, 21, 1))) + vec4(0., 0., 0., 1.)) * texelFetch(Sampler2, UV2 / 16, 0);\n" +
-                        "        gl_Position = ProjMat * ModelViewMat * vertex;\n" +
-                        "    } else ";
-
-        public static final String Hide_ScoreBoard_Numbers =
-                        "\n" +
-                        "    if (Position.z == 0.0\n" +
-                        "        && gl_Position.x >= 0.94\n" +
-                        "        && gl_Position.y >= -0.35\n" +
-                        "        && vertexColor.g == 84.0/255.0\n" +
-                        "        && vertexColor.g == 84.0/255.0\n" +
-                        "        && vertexColor.r == 252.0/255.0\n" +
-                        "        && gl_VertexID <= 7\n" +
-                        "    ) {\n" +
-                        "        gl_Position = ProjMat * ModelViewMat * vec4(ScreenSize + 100.0, 0.0, ScreenSize + 100.0);\n" +
-                        "    }";
-
-        public static final String Animated_Text_FSH =
-                        "\n" +
-                        "    vec2 p1 = round(pos1 / (posID == 0 ? 1 - coord.x : 1 - coord.y));\n" +
-                        "    vec2 p2 = round(pos2 / (posID == 0 ? coord.y : coord.x));\n" +
-                        "    ivec2 resolution = ivec2(abs(p1 - p2));\n" +
-                        "    ivec2 corner = ivec2(min(p1, p2));\n" +
-                        "    vec4 pixel = texture(Sampler0, corner / 256.0) * 255;\n" +
-                        "    if (pixel.a == 1) {\n" +
-                        "        ivec2 frames = ivec2(resolution / pixel.gb);\n" +
-                        "        vec2 uv = (texCoord0 * 256 - corner) / frames.x;\n" +
-                        "        if (uv.x > pixel.y || uv.y > pixel.z)\n" +
-                        "            discard;\n" +
-                        "        int time = int(GameTime * pixel.r * 10 * pixel.x) % int(frames.x * frames.y);\n" +
-                        "        uv = corner + mod(uv, pixel.yz) + vec2(time % frames.x, time / frames.x % frames.y) * pixel.yz;\n" +
-                        "        color = texture(Sampler0, uv / 256.0) * vertexColor * ColorModulator;\n" +
-                        "    }";
-
-        public static final String Animated_Text_VSH =
-                        "\n" +
-                        "    pos1 = pos2 = vec2(0);\n" +
-                        "    posID = gl_VertexID % 4;\n" +
-                        "    const vec2[4] corners = vec2[4](vec2(0), vec2(0, 1), vec2(1), vec2(1, 0));\n" +
-                        "    coord = corners[posID];\n" +
-                        "    if (posID == 0) pos1 = UV0 * 256;\n" +
-                        "    if (posID == 2) pos2 = UV0 * 256;";
-
-        public static final String Animated_Text_Out =
-                        "\n" +
-                        "out vec2 pos1;\n" +
-                        "out vec2 pos2;\n" +
-                        "out vec2 coord;\n" +
-                        "flat out int posID;\n";
-
-        public static final String Animated_Text_In =
-                        "\n" +
-                        "in vec2 pos1;\n" +
-                        "in vec2 pos2;\n" +
-                        "in vec2 coord;\n" +
-                        "flat in int posID;\n";
-    }
 }

@@ -33,6 +33,8 @@ import java.util.function.Function;
  */
 public class VersionHelper {
 
+    private static final int TARGET_VERSION = 260102;
+
     /**
      * A function to check for plugin updates asynchronously by comparing the plugin's current version with the latest version available.
      */
@@ -75,6 +77,9 @@ public class VersionHelper {
      */
     public static void init(String serverVersion) {
         version = parseVersionToInteger(serverVersion);
+        if (version != TARGET_VERSION) {
+            throw new IllegalStateException("CustomNameplates only supports Paper 26.1.2 servers, current server version: " + serverVersion);
+        }
         checkMojMap();
         checkFolia();
         checkMohist();
@@ -158,67 +163,8 @@ public class VersionHelper {
         }
     }
 
-    /**
-     * Checks if the server version is newer than 1.21.9
-     *
-     * @return True if the version is newer than 1.21.9, otherwise false.
-     */
-    public static boolean isVersionNewerThan1_21_9() {
-        return version >= 12109;
-    }
-
-    /**
-     * Checks if the server version is newer than 1.21.5
-     *
-     * @return True if the version is newer than 1.21.5, otherwise false.
-     */
-    public static boolean isVersionNewerThan1_21_5() {
-        return version >= 12105;
-    }
-
-    /**
-     * Checks if the server version is newer than 1.21.2.
-     *
-     * @return True if the version is newer than 1.21.2, otherwise false.
-     */
-    public static boolean isVersionNewerThan1_21_2() {
-        return version >= 12102;
-    }
-
-    /**
-     * Checks if the server version is newer than 1.20.5.
-     *
-     * @return True if the version is newer than 1.20.5, otherwise false.
-     */
-    public static boolean isVersionNewerThan1_20_5() {
-        return version >= 12005;
-    }
-
-    /**
-     * Checks if the server version is newer than 1.20.4.
-     *
-     * @return True if the version is newer than 1.20.4, otherwise false.
-     */
-    public static boolean isVersionNewerThan1_20_4() {
-        return version >= 12004;
-    }
-
-    /**
-     * Checks if the server version is newer than 1.19.4.
-     *
-     * @return True if the version is newer than 1.19.4, otherwise false.
-     */
-    public static boolean isVersionNewerThan1_19_4() {
-        return version >= 11904;
-    }
-
-    /**
-     * Checks if the server version is newer than 1.20.2.
-     *
-     * @return True if the version is newer than 1.20.2, otherwise false.
-     */
-    public static boolean isVersionNewerThan1_20_2() {
-        return version >= 12002;
+    public static boolean isVersion26_1_2() {
+        return version == TARGET_VERSION;
     }
 
     /**

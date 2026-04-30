@@ -102,44 +102,26 @@ public class BukkitPlatform implements Platform {
     }
 
     static {
-//        ThrowableFunction<Object, String> scoreContentNameFunction = VersionHelper.isVersionNewerThan1_21_2() ? (o -> {
-//            @SuppressWarnings("unchecked")
-//            Optional<String> optional = (Optional<String>) Reflections.method$Either$right.invoke(o);
-//            return optional.orElse(null);
-//        }) : (o -> (String) o);
         registerPacketConsumer((player, event, packet) -> {
             if (!ConfigManager.actionbarModule()) return;
             if (!ConfigManager.catchOtherActionBar()) return;
             if (!player.shouldCNTakeOverActionBar()) return;
             try {
-                // some plugins would send null to clear the actionbar, what a bad solution
                 Object component = Reflections.field$ClientboundSetActionBarTextPacket$text.get(packet);
-                if (component == null && !VersionHelper.isVersionNewerThan1_20_5()) {
-                    // paper api, must be from other plugins
-                    Object adventureComponent = Reflections.field$ClientboundSetActionBarTextPacket$adventure$text.get(packet);
-                    if (adventureComponent != null) {
-                        String json = (String) Reflections.method$ComponentSerializer$serialize.invoke(serializer, adventureComponent);
-                        CustomNameplates.getInstance().getScheduler().async().execute(() -> {
-                            ((ActionBarManagerImpl) CustomNameplates.getInstance().getActionBarManager()).handleActionBarPacket(player, AdventureHelper.jsonToMiniMessage(json));
-                        });
-                    } else {
-                        // bungeecord components ?
-                    }
-                } else {
-                    // mc components
-                    Object contents = Reflections.method$Component$getContents.invoke(component);
-                    if (contents == null) {
-                        return;
-                    }
-                    if (Reflections.clazz$ScoreContents.isAssignableFrom(contents.getClass())) {
-                        //String name = scoreContentNameFunction.apply(Reflections.field$ScoreContents$name.get(contents));
-                        String objective = (String) Reflections.field$ScoreContents$objective.get(contents);
-                        if ("actionbar".equals(objective)) return;
-                    }
-                    CustomNameplates.getInstance().getScheduler().async().execute(() -> {
-                        ((ActionBarManagerImpl) CustomNameplates.getInstance().getActionBarManager()).handleActionBarPacket(player, AdventureHelper.minecraftComponentToMiniMessage(component));
-                    });
+                if (component == null) {
+                    return;
                 }
+                Object contents = Reflections.method$Component$getContents.invoke(component);
+                if (contents == null) {
+                    return;
+                }
+                if (Reflections.clazz$ScoreContents.isAssignableFrom(contents.getClass())) {
+                    String objective = (String) Reflections.field$ScoreContents$objective.get(contents);
+                    if ("actionbar".equals(objective)) return;
+                }
+                CustomNameplates.getInstance().getScheduler().async().execute(() -> {
+                    ((ActionBarManagerImpl) CustomNameplates.getInstance().getActionBarManager()).handleActionBarPacket(player, AdventureHelper.minecraftComponentToMiniMessage(component));
+                });
             } catch (ReflectiveOperationException e) {
                 CustomNameplates.getInstance().getPluginLogger().severe("Failed to handle ClientboundSetActionBarTextPacket", e);
             }
@@ -155,9 +137,9 @@ public class BukkitPlatform implements Platform {
                     bukkitCNPlayer.setName(name);
                 }
             } catch (ReflectiveOperationException e) {
-                CustomNameplates.getInstance().getPluginLogger().severe("Failed to handle ClientboundGameProfilePacket", e);
+                CustomNameplates.getInstance().getPluginLogger().severe("Failed to handle ClientboundLoginFinishedPacket", e);
             }
-        }, "PacketLoginOutSuccess", "ClientboundLoginFinishedPacket", "ClientboundGameProfilePacket");
+        }, "ClientboundLoginFinishedPacket");
 
         registerPacketConsumer((player, event, packet) -> {
             if (!ConfigManager.actionbarModule()) return;
@@ -169,18 +151,9 @@ public class BukkitPlatform implements Platform {
                 if (actionBar) {
                     CustomNameplates.getInstance().getScheduler().async().execute(() -> {
                         try {
-                            String miniMessage;
-                            if (VersionHelper.isVersionNewerThan1_20_4()) {
-                                // 1.20.4+
-                                Object component = Reflections.field$ClientboundSystemChatPacket$component.get(packet);
-                                if (component == null) return;
-                                miniMessage = AdventureHelper.minecraftComponentToMiniMessage(component);
-                            } else {
-                                // 1.20.4-
-                                String json = (String) Reflections.field$ClientboundSystemChatPacket$text.get(packet);
-                                if (json == null) return;
-                                miniMessage = AdventureHelper.jsonToMiniMessage(json);
-                            }
+                            Object component = Reflections.field$ClientboundSystemChatPacket$component.get(packet);
+                            if (component == null) return;
+                            String miniMessage = AdventureHelper.minecraftComponentToMiniMessage(component);
                             if (LANG_PATTERN.matcher(miniMessage).find()) {
                                 if (ConfigManager.displaySystemChat()) {
                                     ((ActionBarManagerImpl) CustomNameplates.getInstance().getActionBarManager()).temporarilyHideCustomActionBar(player);
@@ -203,9 +176,7 @@ public class BukkitPlatform implements Platform {
             }
         }, "ClientboundSystemChatPacket");
 
-        // 1.20.2+
         registerPacketConsumer((player, event, packet) -> {
-            if (!VersionHelper.isVersionNewerThan1_20_2()) return;
             try {
                 int entityID = (int) Reflections.field$ClientboundAddEntityPacket$entityId.get(packet);
                 CNPlayer added = CustomNameplates.getInstance().getPlayer(entityID);
@@ -219,25 +190,7 @@ public class BukkitPlatform implements Platform {
             } catch (ReflectiveOperationException e) {
                 CustomNameplates.getInstance().getPluginLogger().severe("Failed to handle ClientboundAddEntityPacket", e);
             }
-        }, "ClientboundAddEntityPacket", "PacketPlayOutSpawnEntity");
-
-        // 1.19.4-1.20.1
-        registerPacketConsumer((player, event, packet) -> {
-            if (VersionHelper.isVersionNewerThan1_20_2()) return;
-            try {
-                int entityID = (int) Reflections.field$PacketPlayOutNamedEntitySpawn$entityId.get(packet);
-                CNPlayer added = CustomNameplates.getInstance().getPlayer(entityID);
-                if (added != null) {
-                    Tracker tracker = added.addPlayerToTracker(player);
-                    tracker.setScale(added.scale());
-                    tracker.setCrouching(added.isCrouching());
-                    tracker.setSpectator(added.isSpectator());
-                    CustomNameplates.getInstance().getUnlimitedTagManager().onAddPlayer(added, player);
-                }
-            } catch (ReflectiveOperationException e) {
-                CustomNameplates.getInstance().getPluginLogger().severe("Failed to handle PacketPlayOutNamedEntitySpawn", e);
-            }
-        }, "PacketPlayOutNamedEntitySpawn");
+        }, "ClientboundAddEntityPacket");
 
         registerPacketConsumer((player, event, packet) -> {
             try {
@@ -252,7 +205,7 @@ public class BukkitPlatform implements Platform {
             } catch (ReflectiveOperationException e) {
                 CustomNameplates.getInstance().getPluginLogger().severe("Failed to handle ClientboundRemoveEntitiesPacket", e);
             }
-        }, "PacketPlayOutEntityDestroy", "ClientboundRemoveEntitiesPacket");
+        }, "ClientboundRemoveEntitiesPacket");
 
         // for skin plugin compatibility
         registerPacketConsumer((player, event, packet) -> {
@@ -343,10 +296,9 @@ public class BukkitPlatform implements Platform {
             } catch (ReflectiveOperationException e) {
                 CustomNameplates.getInstance().getPluginLogger().severe("Failed to handle ClientboundSetPassengersPacket", e);
             }
-        }, "PacketPlayOutMount", "ClientboundSetPassengersPacket");
+        }, "ClientboundSetPassengersPacket");
 
         registerPacketConsumer((player, event, packet) -> {
-            if (!VersionHelper.isVersionNewerThan1_20_5()) return;
             try {
                 int entityID = (int) Reflections.field$ClientboundUpdateAttributesPacket$id.get(packet);
                 CNPlayer another = CustomNameplates.getInstance().getPlayer(entityID);
@@ -404,7 +356,7 @@ public class BukkitPlatform implements Platform {
             } catch (ReflectiveOperationException e) {
                 CustomNameplates.getInstance().getPluginLogger().severe("Failed to handle ClientboundUpdateAttributesPacket", e);
             }
-        }, "ClientboundUpdateAttributesPacket", "PacketPlayOutUpdateAttributes");
+        }, "ClientboundUpdateAttributesPacket");
 
         registerPacketConsumer((player, event, packet) -> {
             try {
@@ -426,7 +378,7 @@ public class BukkitPlatform implements Platform {
             } catch (ReflectiveOperationException e) {
                 CustomNameplates.getInstance().getPluginLogger().severe("Failed to handle ClientboundSetEntityDataPacket", e);
             }
-        }, "ClientboundSetEntityDataPacket", "PacketPlayOutEntityMetadata");
+        }, "ClientboundSetEntityDataPacket");
 
         // not a perfect solution but would work in most cases
         registerPacketConsumer((player, event, packet) -> {
@@ -462,7 +414,7 @@ public class BukkitPlatform implements Platform {
                         Optional<Object> optionalParameters = (Optional<Object>) Reflections.field$ClientboundSetPlayerTeamPacket$parameters.get(packet);
                         if (optionalParameters.isPresent()) {
                             Object parameters = optionalParameters.get();
-                            Reflections.field$ClientboundSetPlayerTeamPacket$Parameters$nametagVisibility.set(parameters, VersionHelper.isVersionNewerThan1_21_5() ? Reflections.instance$Team$Visibility$NEVER : "never");
+                            Reflections.field$ClientboundSetPlayerTeamPacket$Parameters$nametagVisibility.set(parameters, Reflections.instance$Team$Visibility$NEVER);
                         }
                     }
                     // remove
@@ -492,7 +444,7 @@ public class BukkitPlatform implements Platform {
                         Optional<Object> optionalParameters = (Optional<Object>) Reflections.field$ClientboundSetPlayerTeamPacket$parameters.get(packet);
                         if (optionalParameters.isPresent()) {
                             Object parameters = optionalParameters.get();
-                            Reflections.field$ClientboundSetPlayerTeamPacket$Parameters$nametagVisibility.set(parameters, VersionHelper.isVersionNewerThan1_21_5() ? Reflections.instance$Team$Visibility$NEVER : "never");
+                            Reflections.field$ClientboundSetPlayerTeamPacket$Parameters$nametagVisibility.set(parameters, Reflections.instance$Team$Visibility$NEVER);
                         }
                     }
                     // add members
@@ -511,7 +463,7 @@ public class BukkitPlatform implements Platform {
             } catch (ReflectiveOperationException e) {
                 CustomNameplates.getInstance().getPluginLogger().severe("Failed to handle ClientboundSetPlayerTeamPacket", e);
             }
-        }, "ClientboundSetPlayerTeamPacket", "PacketPlayOutScoreboardTeam");
+        }, "ClientboundSetPlayerTeamPacket");
     }
 
     @Override
@@ -632,15 +584,10 @@ public class BukkitPlatform implements Platform {
                     Reflections.instance$EntityType$TEXT_DISPLAY, 0, Reflections.instance$Vec3$Zero, headYaw
             );
 
-            // It's shit code
             ArrayList<Object> values = new ArrayList<>();
             EntityData.InterpolationDelay.addEntityDataIfNotDefaultValue(interpolationDelay,            values);
-            if (VersionHelper.isVersionNewerThan1_20_2()) {
-                EntityData.PositionRotationInterpolationDuration.addEntityDataIfNotDefaultValue(positionRotationInterpolationDuration, values);
-                EntityData.TransformationInterpolationDuration.addEntityDataIfNotDefaultValue(transformationInterpolationDuration, values);
-            } else {
-                EntityData.InterpolationDuration.addEntityDataIfNotDefaultValue(transformationInterpolationDuration, values);
-            }
+            EntityData.PositionRotationInterpolationDuration.addEntityDataIfNotDefaultValue(positionRotationInterpolationDuration, values);
+            EntityData.TransformationInterpolationDuration.addEntityDataIfNotDefaultValue(transformationInterpolationDuration, values);
             EntityData.BillboardConstraints.addEntityDataIfNotDefaultValue(billboard.id(),               values);
             EntityData.BackgroundColor.addEntityDataIfNotDefaultValue(     backgroundColor,              values);
             EntityData.Text.addEntityDataIfNotDefaultValue(                component,                    values);
@@ -668,11 +615,7 @@ public class BukkitPlatform implements Platform {
 
     @Override
     public Consumer<List<Object>> createTransformationInterpolationDurationModifier(int duration) {
-        if (VersionHelper.isVersionNewerThan1_20_2()) {
-            return (values) -> EntityData.TransformationInterpolationDuration.addEntityData(duration, values);
-        } else {
-            return (values) -> EntityData.InterpolationDuration.addEntityData(duration, values);
-        }
+        return (values) -> EntityData.TransformationInterpolationDuration.addEntityData(duration, values);
     }
 
     @Override

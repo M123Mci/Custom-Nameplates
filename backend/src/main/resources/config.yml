@@ -46,9 +46,6 @@ integrations:
 # Resource Pack Generation Settings: Configure resource pack generation behavior.
 resource-pack:
   disable-generation-on-start: false  # Allow resource pack generation at server start
-  supported-version:
-    # 26.1.2 mainline: use SERVER_VERSION on the target server, or specify a pure numeric version like 26.1.2.
-    min: "SERVER_VERSION"
   namespace: "nameplates"             # Namespace for the resource pack
   font: "default"                     # Default font used
   initial-char: '뀁'                  # Starting character for custom fonts (won't affect Korean characters in chat)
@@ -58,18 +55,9 @@ resource-pack:
     images: 'font/images/'            # Path for other images
     bubbles: 'font/bubbles/'          # Path for bubble text images
     space-split: 'font/base/'         # Path for base font images
-  # Using shader is dangerous and might conflict with other plugin
-  # It's recommended to disable shaders on a 1.21.4+ server
-  shader:
-    enable: true                      # Enable shader generation
-    hide-scoreboard-number: false     # Hiding of scoreboard numbers
-    animated-text: false              # Animated text shaders
-    ItemsAdder-text-effects: false    # ItemsAdder text effects support
   transparent-bossbar:
     color: YELLOW                     # BossBar color to remove
-    "1_20_2+": true                   # Enable transparent bossbar for Minecraft 1.20.2+
-    "1_17-1_20_1": true               # Enable transparent bossbar for Minecraft 1.17-1.20.1
-  legacy-unicodes: true               # Enable legacy Unicode support for Minecraft 1.20+ (increases resource pack size by 900KB)
+  legacy-unicodes: true               # Include Unicode pages in the generated resource pack
 
 # Additional Settings: Extra options to control behavior and performance.
 other-settings:

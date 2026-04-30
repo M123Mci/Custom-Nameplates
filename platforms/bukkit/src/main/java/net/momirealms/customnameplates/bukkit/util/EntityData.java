@@ -17,8 +17,6 @@
 
 package net.momirealms.customnameplates.bukkit.util;
 
-import net.momirealms.customnameplates.api.helper.VersionHelper;
-
 import java.util.List;
 
 public class EntityData<T> {
@@ -33,10 +31,6 @@ public class EntityData<T> {
     // Display only
     public static final EntityData<Integer> InterpolationDelay = of(8, EntityDataValue.Serializers$INT, 0);
 
-    // 1.19.4-1.20.1
-    public static final EntityData<Integer> InterpolationDuration = of(9, EntityDataValue.Serializers$INT, 0);
-
-    // 1.20.2+
     public static final EntityData<Integer> TransformationInterpolationDuration = of(9, EntityDataValue.Serializers$INT, 0);
     public static final EntityData<Integer> PositionRotationInterpolationDuration = of(10, EntityDataValue.Serializers$INT, 0);
 
@@ -65,11 +59,6 @@ public class EntityData<T> {
     }
 
     public EntityData(int id, Object serializer, T defaultValue) {
-        if (!VersionHelper.isVersionNewerThan1_20_2()) {
-            if (id >= 11) {
-                id--;
-            }
-        }
         this.id = id;
         this.serializer = serializer;
         this.defaultValue = defaultValue;

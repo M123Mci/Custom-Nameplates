@@ -1,9 +1,9 @@
 # 构建依赖说明
 
 ## 构建环境
-- JDK: 21
+- JDK: 25 toolchain, Java 21 bytecode (`--release 21`)
 - Gradle: 使用仓库内 `gradlew.bat`
-- 推荐系统: Windows / Linux / macOS（默认构建不依赖个人绝对路径）
+- 推荐系统: Windows（当前 Paper 26.1.2 API 使用本地服务端依赖）
 
 ## 默认构建命令（团队共享）
 - `./gradlew.bat clean shadowJar`
