@@ -26,6 +26,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * VersionHelper is a utility class that provides methods for managing and checking version-related information,
@@ -34,6 +36,7 @@ import java.util.function.Function;
 public class VersionHelper {
 
     private static final int TARGET_VERSION = 260102;
+    private static final Pattern SERVER_VERSION_PATTERN = Pattern.compile("^(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:[-.+].*)?$");
 
     /**
      * A function to check for plugin updates asynchronously by comparing the plugin's current version with the latest version available.
@@ -89,25 +92,14 @@ public class VersionHelper {
     }
 
     public static int parseVersionToInteger(String versionString) {
-        String[] parts = versionString.split("\\.", -1);
-        if (parts.length < 2 || parts.length > 3) {
+        Matcher matcher = SERVER_VERSION_PATTERN.matcher(versionString);
+        if (!matcher.matches()) {
             throw new IllegalArgumentException("Invalid version: " + versionString);
         }
-        int[] versions = new int[3];
-        for (int i = 0; i < parts.length; i++) {
-            String part = parts[i];
-            if (part.isEmpty()) {
-                throw new IllegalArgumentException("Invalid version: " + versionString);
-            }
-            for (int j = 0; j < part.length(); j++) {
-                char c = part.charAt(j);
-                if (c < '0' || c > '9') {
-                    throw new IllegalArgumentException("Invalid version: " + versionString);
-                }
-            }
-            versions[i] = Integer.parseInt(part);
-        }
-        return 10000 * versions[0] + versions[1] * 100 + versions[2];
+        int major = Integer.parseInt(matcher.group(1));
+        int minor = Integer.parseInt(matcher.group(2));
+        int patch = matcher.group(3) == null ? 0 : Integer.parseInt(matcher.group(3));
+        return 10000 * major + minor * 100 + patch;
     }
 
     /**
