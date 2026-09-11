@@ -29,6 +29,7 @@ import dev.dejvokep.boostedyaml.settings.updater.UpdaterSettings;
 import dev.dejvokep.boostedyaml.utils.format.NodeRole;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.momirealms.customnameplates.api.CNPlayer;
 import net.momirealms.customnameplates.api.ConfigManager;
 import net.momirealms.customnameplates.api.CustomNameplates;
@@ -52,6 +53,9 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class BubbleManagerImpl implements BubbleManager, ChatListener {
+    private static final TagResolver IGNORE_HOVER = TagResolver.resolver(
+            "hover", (arguments, context) -> net.kyori.adventure.text.minimessage.tag.Tag.styling());
+
     private final CustomNameplates plugin;
     private final Map<String, Bubble> bubbles = new Object2ObjectOpenHashMap<>();
     private Requirement[] sendBubbleRequirements;
@@ -61,6 +65,8 @@ public class BubbleManagerImpl implements BubbleManager, ChatListener {
     private int stayDuration;
     private int appearDuration;
     private int disappearDuration;
+    private double durationPerCharacter;
+    private int maxStayDuration;
     private float viewRange;
     private Set<String> blacklistChannels;
     private ChannelMode channelMode;
@@ -163,6 +169,16 @@ public class BubbleManagerImpl implements BubbleManager, ChatListener {
     }
 
     @Override
+    public double durationPerCharacter() {
+        return durationPerCharacter;
+    }
+
+    @Override
+    public int maxStayDuration() {
+        return maxStayDuration;
+    }
+
+    @Override
     public int appearDuration() {
         return appearDuration;
     }
@@ -220,6 +236,9 @@ public class BubbleManagerImpl implements BubbleManager, ChatListener {
         defaultBubbleId = document.getString("default-bubble", "chat");
         yOffset = document.getDouble("y-offset", 0.2);
         stayDuration = document.getInt("stay-duration", 160);
+        // 旧配置未显式启用新能力时，保持原有固定显示时间。
+        durationPerCharacter = document.getDouble("duration-per-character", 0.0);
+        maxStayDuration = document.getInt("max-stay-duration", 0);
         appearDuration = document.getInt("appear-duration", 20);
         disappearDuration = document.getInt("disappear-duration", 10);
         viewRange = document.getFloat("view-range", 0.5f);
@@ -248,6 +267,7 @@ public class BubbleManagerImpl implements BubbleManager, ChatListener {
                             .scale(ConfigUtils.vector3(inner.getString("scale", "1,1,1")))
                             .hasShadow(inner.getBoolean("has-shadow", false))
                             .billboard(inner.getEnum("billboard", Billboard.class, Billboard.CENTER))
+                            .affectedByScaling(inner.getBoolean("affected-by-scale-attribute", true))
                             .build();
                     this.bubbleConfigs.put(bubble.id(), bubble);
                     this.bubbleConfigsByCommand.put(bubble.commandSuggestion(), bubble);
@@ -319,6 +339,8 @@ public class BubbleManagerImpl implements BubbleManager, ChatListener {
         }
 
         String fullText = config.textPrefix().fastCreate(player).render(player) + message.replace("\\", "\\\\") + config.textSuffix().fastCreate(player).render(player);
+        // Bubbles only display text; discard hover payloads before layout and component conversion.
+        fullText = AdventureHelper.miniMessage().serialize(AdventureHelper.miniMessage().deserialize(fullText, IGNORE_HOVER));
         int lines = plugin.getAdvanceManager().getLines(fullText, config.lineWidth());
         if (lines > config.maxLines()) return;
         if (lines <= 0) return;
@@ -342,9 +364,10 @@ public class BubbleManagerImpl implements BubbleManager, ChatListener {
             advance = config.lineWidth();
         }
 
+        int textLength = AdventureHelper.stripTags(message).length();
         BubbleTag bubbleTag = new BubbleTag(player, renderer, channel, config,
                 AdventureHelper.miniMessageToMinecraftComponent(fullText),
-                bubble == null ? null : AdventureHelper.miniMessageToMinecraftComponent(AdventureHelper.surroundWithNameplatesFont(bubble.createImage(advance, 1,1))), this);
+                bubble == null ? null : AdventureHelper.miniMessageToMinecraftComponent(AdventureHelper.surroundWithNameplatesFont(bubble.createImage(advance, 1,1))), this, textLength);
         renderer.addTag(bubbleTag);
         if (delay != 0) {
             plugin.getScheduler().asyncLater(() -> bubbleTag.setCanShow(true), delay * 50L, TimeUnit.MILLISECONDS);

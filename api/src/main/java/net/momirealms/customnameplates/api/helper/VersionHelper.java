@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
  */
 public class VersionHelper {
 
-    private static final int TARGET_VERSION = 260102;
+    private static final int TARGET_VERSION = 260200;
     private static final Pattern SERVER_VERSION_PATTERN = Pattern.compile("^(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:[-.+].*)?$");
 
     /**
@@ -81,7 +81,7 @@ public class VersionHelper {
     public static void init(String serverVersion) {
         version = parseVersionToInteger(serverVersion);
         if (version != TARGET_VERSION) {
-            throw new IllegalStateException("CustomNameplates only supports Paper 26.1.2 servers, current server version: " + serverVersion);
+            throw new IllegalStateException("CustomNameplates only supports Paper 26.2 servers, current server version: " + serverVersion);
         }
         checkMojMap();
         checkFolia();
@@ -155,7 +155,9 @@ public class VersionHelper {
         }
     }
 
-    public static boolean isVersion26_1_2() {
+    public static boolean isVersion26_1_2() { return version == 260102; }
+
+    public static boolean isVersion26_2() {
         return version == TARGET_VERSION;
     }
 

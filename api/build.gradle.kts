@@ -2,7 +2,7 @@ plugins {
     id("maven-publish")
 }
 
-val externalPluginLibDir = file("C:/PluginLibs")
+val externalPluginLibDir = rootProject.file("../../PluginLibs/Jars")
 
 repositories {
     maven("https://jitpack.io/")

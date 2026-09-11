@@ -70,7 +70,7 @@ public class ResourcePackManagerImpl implements ResourcePackManager {
         // save unicodes
         this.saveLegacyUnicodes();
 
-        // 26.1.2 uses the 1.21.4+ resource-pack format and does not require legacy shader overlays.
+        // 26.2 使用资源包格式 88.0，不生成旧版本着色器叠加目录。
 
         // create json object
         JsonObject fontJson = new JsonObject();
@@ -165,8 +165,8 @@ public class ResourcePackManagerImpl implements ResourcePackManager {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     private void setPackFormat() {
-        plugin.getConfigManager().saveResource("ResourcePack" + File.separator + "pack_1_21_4.mcmeta");
-        File file = new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack_1_21_4.mcmeta");
+        plugin.getConfigManager().saveResource("ResourcePack" + File.separator + "pack_26_2.mcmeta");
+        File file = new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack_26_2.mcmeta");
         file.renameTo(new File(plugin.getDataFolder(), "ResourcePack" + File.separator + "pack.mcmeta"));
         plugin.getConfigManager().saveResource("ResourcePack" + File.separator + "pack.png");
     }

@@ -5,7 +5,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
-def unifiedVersion = "local"
+def unifiedVersion = rootProject.property("project_version").toString()
 def normalizeConfiguredPath = { Object rawValue ->
     if (rawValue == null) {
         return null
@@ -22,7 +22,7 @@ def preResolvedLocalMavenRepoPath = normalizeConfiguredPath(
         ? extensions.extraProperties.get("resolvedLocalPluginRepoDir")
         : null
 )
-def localMavenRepoDir = file(preResolvedLocalMavenRepoPath ?: (resolveConfiguredPath("localPluginRepoDir", "LOCAL_PLUGIN_REPO_DIR") ?: "C:/PluginLibs/Maven"))
+def localMavenRepoDir = file(preResolvedLocalMavenRepoPath ?: (resolveConfiguredPath("localPluginRepoDir", "LOCAL_PLUGIN_REPO_DIR") ?: "../../PluginLibs/Maven"))
 
 ext.unifiedPluginVersion = unifiedVersion
 ext.unifiedLocalMavenRepoDir = localMavenRepoDir

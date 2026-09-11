@@ -187,7 +187,7 @@ public class TagRendererImpl implements TagRenderer {
     }
 
     @Override
-    public void addTag(Tag tag) {
+    public synchronized void addTag(Tag tag) {
         if (tagVector.contains(tag)) {
             return;
         }
@@ -202,7 +202,7 @@ public class TagRendererImpl implements TagRenderer {
     }
 
     @Override
-    public void addTag(Tag tag, int index) {
+    public synchronized void addTag(Tag tag, int index) {
         if (index < 0 || index > this.tagArray.length) {
             throw new IndexOutOfBoundsException("Index out of bounds: " + index);
         }
@@ -222,13 +222,12 @@ public class TagRendererImpl implements TagRenderer {
     }
 
     @Override
-    public int removeTagIf(Predicate<Tag> predicate) {
-        List<Integer> removedIndexes = new ArrayList<>();
+    public synchronized int removeTagIf(Predicate<Tag> predicate) {
+        List<Tag> toRemove = new ArrayList<>();
         boolean hasRTag = false;
-        for (int i = 0; i < this.tagArray.length; i++) {
-            Tag tag = this.tagArray[i];
+        for (Tag tag : this.tagVector) {
             if (predicate.test(tag)) {
-                removedIndexes.add(i);
+                toRemove.add(tag);
                 tag.hide();
                 if (tag instanceof Feature feature) {
                     this.owner.removeFeature(feature);
@@ -238,18 +237,17 @@ public class TagRendererImpl implements TagRenderer {
                 }
             }
         }
-        if (removedIndexes.isEmpty()) {
+        if (toRemove.isEmpty()) {
             return 0;
         }
-        Collections.reverse(removedIndexes);
-        for (int index : removedIndexes) {
-            this.tagVector.remove(index);
+        for (Tag tag : toRemove) {
+            this.tagVector.remove(tag);
         }
         resetTagArray();
         if (hasRTag) {
             resetRTagArray();
         }
-        return removedIndexes.size();
+        return toRemove.size();
     }
 
     @Override
@@ -263,7 +261,7 @@ public class TagRendererImpl implements TagRenderer {
     }
 
     @Override
-    public void removeTag(Tag tag) {
+    public synchronized void removeTag(Tag tag) {
         int i = 0;
         boolean has = false;
         for (Tag display : this.tagArray) {

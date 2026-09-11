@@ -2,7 +2,6 @@ import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.register
 import xyz.jpenilla.runpaper.task.RunServer
 
-val serverLibrariesDir = file(rootProject.properties["paper_server_lib_dir"].toString())
 
 plugins {
     id("xyz.jpenilla.run-paper") version "2.3.1"
@@ -15,6 +14,7 @@ repositories {
     maven("https://repo.papermc.io/repository/maven-public/") // paper
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/") // spigot
+    maven("https://repo.momirealms.net/releases/")
 }
 
 dependencies {
@@ -24,24 +24,29 @@ dependencies {
     implementation(project(":backend"))
     implementation(project(":platforms:bukkit:compatibility"))
 
-    compileOnly(files(rootProject.properties["paper_api_jar"].toString()))
-    compileOnly(files(File(serverLibrariesDir, "it/unimi/dsi/fastutil/8.5.18/fastutil-8.5.18.jar")))
-    compileOnly(files(File(serverLibrariesDir, "com/google/guava/guava/33.5.0-jre/guava-33.5.0-jre.jar")))
-    compileOnly(files(File(serverLibrariesDir, "com/mojang/brigadier/1.3.10/brigadier-1.3.10.jar")))
-    compileOnly(files(File(serverLibrariesDir, "net/md-5/bungeecord-chat/1.21-R0.2-deprecated+build.21/bungeecord-chat-1.21-R0.2-deprecated+build.21.jar")))
+    compileOnly("io.papermc.paper:paper-api:${rootProject.properties["paper_api_version"]}")
     compileOnly("me.clip:placeholderapi:${rootProject.properties["placeholder_api_version"]}")
+    compileOnly("com.mojang:datafixerupper:10.0.21")
+    compileOnly("com.mojang:brigadier:1.3.10")
 
     // YAML
     compileOnly("dev.dejvokep:boosted-yaml:${rootProject.properties["boosted_yaml_version"]}")
 
     // Adventure
     implementation("net.kyori:adventure-api:${rootProject.properties["adventure_bundle_version"]}")
+    implementation("net.kyori:adventure-platform-bukkit:4.4.1")
     implementation("net.kyori:adventure-text-minimessage:${rootProject.properties["adventure_bundle_version"]}")
-    implementation("net.kyori:adventure-platform-bukkit:${rootProject.properties["adventure_platform_version"]}")
     implementation("net.kyori:adventure-text-serializer-gson:${rootProject.properties["adventure_bundle_version"]}") {
         exclude("com.google.code.gson", "gson")
     }
     implementation("net.kyori:adventure-text-serializer-json-legacy-impl:${rootProject.properties["adventure_bundle_version"]}")
+    implementation("net.kyori:adventure-text-serializer-legacy:${project.properties["adventure_bundle_version"]}")
+
+    implementation("net.momirealms:sparrow-reflection:0.34")
+    implementation("net.momirealms:sparrow-nbt:0.22")
+    implementation("net.momirealms:sparrow-nbt-codec:0.22")
+    implementation("net.momirealms:sparrow-nbt-legacy-codec:0.22")
+    implementation("net.momirealms:sparrow-nbt-parser:0.22")
 
     // BStats
     compileOnly("org.bstats:bstats-bukkit:${rootProject.properties["bstats_version"]}")
@@ -73,6 +78,8 @@ tasks {
         relocate("com.github.benmanes.caffeine", "net.momirealms.customnameplates.libraries.caffeine")
         relocate("net.objecthunter.exp4j", "net.momirealms.customnameplates.libraries.exp4j")
         relocate("redis.clients.jedis", "net.momirealms.customnameplates.libraries.jedis")
+        relocate("net.momirealms.sparrow.reflection", "net.momirealms.customnameplates.libraries.reflection")
+        relocate("net.momirealms.sparrow.nbt", "net.momirealms.customnameplates.libraries.nbt")
     }
 }
 
@@ -93,7 +100,7 @@ tasks.register("run-paper", RunServer::class) {
     group = "run paper"
     workingDir("run")
     pluginJars.from(tasks.shadowJar.flatMap { it.archiveFile })
-    minecraftVersion("26.1.2")
+    minecraftVersion("26.2")
     javaLauncher = javaToolchains.launcherFor {
         vendor = JvmVendorSpec.JETBRAINS
         languageVersion = JavaLanguageVersion.of(rootProject.properties["java_toolchain_version"].toString().toInt())

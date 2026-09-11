@@ -1,7 +1,7 @@
 name: CustomNameplates
 version: '${project_version}'
 main: net.momirealms.customnameplates.bukkit.BukkitBootstrap
-api-version: 26.1.2
+api-version: '26.2'
 authors: [ XiaoMoMi ]
 folia-supported: true
 softdepend:

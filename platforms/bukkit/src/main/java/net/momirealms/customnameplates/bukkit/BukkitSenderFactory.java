@@ -28,6 +28,7 @@ package net.momirealms.customnameplates.bukkit;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.momirealms.customnameplates.api.helper.AdventureHelper;
 import net.momirealms.customnameplates.bukkit.util.Reflections;
 import net.momirealms.customnameplates.common.sender.Sender;
@@ -45,7 +46,13 @@ public class BukkitSenderFactory extends SenderFactory<BukkitCustomNameplates, C
 
     public BukkitSenderFactory(BukkitCustomNameplates plugin) {
         super(plugin);
-        this.audiences = BukkitAudiences.create(plugin.getBootstrap());
+        audiences = BukkitAudiences.create(plugin.getBootstrap());
+    }
+
+    /** 保留接管版公开 Audience API，消息发送仍使用当前版本实现。 */
+    @Override
+    public Audience getAudience(CommandSender sender) {
+        return audiences.sender(sender);
     }
 
     @Override
@@ -65,11 +72,6 @@ public class BukkitSenderFactory extends SenderFactory<BukkitCustomNameplates, C
     }
 
     @Override
-    public Audience getAudience(CommandSender sender) {
-        return this.audiences.sender(sender);
-    }
-
-    @Override
     protected void sendMessage(CommandSender sender, Component message) {
         if (sender instanceof Player player) {
             try {
@@ -78,10 +80,8 @@ public class BukkitSenderFactory extends SenderFactory<BukkitCustomNameplates, C
             } catch (ReflectiveOperationException e) {
                 getPlugin().getPluginLogger().warn("Failed to send message to player " + sender.getName(), e);
             }
-        } else if (sender instanceof ConsoleCommandSender || sender instanceof RemoteConsoleCommandSender) {
-            getAudience(sender).sendMessage(message);
         } else {
-            getPlugin().getScheduler().executeSync(() -> getAudience(sender).sendMessage(message));
+            sender.sendMessage(LegacyComponentSerializer.legacySection().serialize(message));
         }
     }
 
@@ -114,6 +114,6 @@ public class BukkitSenderFactory extends SenderFactory<BukkitCustomNameplates, C
     @Override
     public void close() {
         super.close();
-        this.audiences.close();
+        audiences.close();
     }
 }
